@@ -1,0 +1,225 @@
+Absolutely! To create a **comprehensive** Notion setup for your blog, we need to structure both the **Notion database** and the **individual blog post pages** to ensure they work seamlessly with your Next.js app. Below is a **detailed setup guide**, covering:
+
+1. **Setting up your Notion Database (Blog CMS)**
+2. **Structuring Blog Post Pages**
+3. **Advanced Filtering and Metadata for SEO & Organization**
+4. **Embedding and Rich Media Support**
+5. **Permissions & API Integration**
+6. **Example Notion API Query for Fetching Data**
+7. **Synchronizing Notion Changes in Next.js**
+
+---
+
+## **1. Setting Up Your Notion Database (Blog CMS)**
+
+You'll create a **Notion database** where each entry represents a **blog post**. This database will contain **structured properties** to make content easy to query via the Notion API.
+
+### **Database Structure:**
+| Property Name      | Type             | Purpose |
+|--------------------|-----------------|---------|
+| **Title**         | Title            | The main title of the blog post. |
+| **Slug**          | Text             | A URL-friendly version of the title (e.g., `my-first-post`). |
+| **Published**     | Checkbox         | Marks if the blog post is published. |
+| **Publish Date**  | Date             | When the post is officially published. |
+| **Excerpt**       | Text             | A short summary of the post for previews. |
+| **Cover Image**   | Files & media    | The main banner image for the post. |
+| **Content**       | Page (Link)      | Links to a separate Notion page for the full content. |
+| **Author**        | Person           | The author of the post. |
+| **Tags**          | Multi-select     | Blog categories (e.g., `Tech`, `Lifestyle`, `Coding`). |
+| **SEO Title**     | Text             | Custom title for SEO and social previews. |
+| **SEO Description** | Text          | Custom meta description for search engines. |
+| **Social Image**  | Files & media    | A preview image for social sharing. |
+| **Reading Time**  | Formula          | Automatically calculates estimated reading time. |
+| **Views (Optional)** | Number        | Stores the number of views (can be updated from Next.js). |
+
+---
+
+## **2. Structuring Blog Post Pages in Notion**
+
+Each blog post should be a **separate Notion page** linked in the **Content** field of your database. This allows for **rich media formatting** and **flexibility** in editing.
+
+### **How to Structure the Post Page Content**
+When writing a blog post in Notion:
+- **Start with a Cover Image** (Optional)
+- **Use H1 for the Title**
+- **Use H2 for Subheadings**
+- **Embed Media** (Images, Videos, Code Blocks)
+- **Use Callouts for Key Takeaways**
+- **Create Lists (Bullet or Numbered)** for structured content
+- **Use Toggles for FAQs or Spoilers**
+- **Add a Footer Section** (Related Posts, Author Bio)
+
+---
+
+## **3. Advanced Filtering & Metadata for SEO & Organization**
+To make it easier to filter posts and improve **SEO**, you can use Notion’s database filters.
+
+### **Filtering Posts:**
+1. **Published Only:** Filter the database to show only items where `Published = true`.
+2. **Sort by Publish Date:** Default sorting should be by `Publish Date DESC`.
+3. **Filter by Tag:** Create views for different categories (e.g., `Tech Posts`, `Interviews`).
+
+### **SEO Optimization:**
+- Store **SEO Titles** and **Descriptions** separately so you can query them and use them in `<meta>` tags.
+- Add **Social Images** to improve sharing previews.
+
+---
+
+## **4. Embedding & Rich Media Support**
+Notion supports **rich content embedding**, and your Next.js app should be able to handle these.
+
+**Types of Media You Can Embed:**
+- **Images & GIFs:** Use Notion’s `Files & media` property.
+- **YouTube/Vimeo Videos:** Embed directly.
+- **Twitter/X Posts:** Embed via the `Embed` block.
+- **Code Blocks:** Use Notion’s `Code Block` feature.
+- **Markdown Support:** If you plan to export to Markdown, use `rich text`.
+
+---
+
+## **5. Permissions & API Integration**
+To connect Notion with your app, you need **proper permissions**.
+
+### **Steps:**
+1. **Create a Notion Integration** at [Notion API](https://www.notion.so/my-integrations).
+2. **Get Your API Key** and save it in **Next.js environment variables**:
+   ```plaintext
+   NOTION_API_KEY=your-secret-key
+   NOTION_DATABASE_ID=your-database-id
+   ```
+3. **Share the Database with Your Integration**:
+   - Open Notion.
+   - Click “Share” at the top-right.
+   - Select “Invite” and **add your Integration**.
+   - Enable “Read Access.”
+
+---
+
+## **6. Example Notion API Query for Fetching Data**
+In your Next.js project, create a function to fetch blog posts from Notion.
+
+**`lib/notion.ts`**
+```typescript
+import { Client } from '@notionhq/client';
+
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+
+export async function getPublishedBlogPosts() {
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_DATABASE_ID as string,
+    filter: {
+      property: 'Published',
+      checkbox: { equals: true },
+    },
+    sorts: [
+      {
+        property: 'Publish Date',
+        direction: 'descending',
+      },
+    ],
+  });
+
+  return response.results.map((page) => {
+    return {
+      id: page.id,
+      title: page.properties.Title.title[0]?.text.content,
+      slug: page.properties.Slug.rich_text[0]?.text.content,
+      publishedAt: page.properties['Publish Date'].date.start,
+      excerpt: page.properties.Excerpt.rich_text[0]?.text.content,
+      coverImage: page.properties['Cover Image'].files[0]?.external.url,
+      author: page.properties.Author.people[0]?.name,
+      tags: page.properties.Tags.multi_select.map((tag) => tag.name),
+    };
+  });
+}
+```
+---
+
+## **7. Synchronizing Notion Changes in Next.js**
+To ensure your blog stays **updated with the latest Notion content**, use **Incremental Static Regeneration (ISR)** in Next.js.
+
+### **Using `getStaticProps` with ISR**
+```typescript
+import { getPublishedBlogPosts } from '@/lib/notion';
+
+export async function getStaticProps() {
+  const posts = await getPublishedBlogPosts();
+
+  return {
+    props: { posts },
+    revalidate: 60, // Re-fetch data every 60 seconds
+  };
+}
+```
+
+This will **rebuild** the blog posts **only if new data is available** in Notion.
+
+---
+
+## **Bonus: Storing View Counts in Supabase**
+If you want to track **blog post views**, you can store and update them in **Supabase**.
+
+1. Create a **Supabase table** `views`:
+   - `post_slug` (Primary Key)
+   - `count` (Number)
+
+2. Update views when a user visits a post:
+```typescript
+import supabase from '@/lib/supabase';
+
+export async function incrementView(slug: string) {
+  const { data, error } = await supabase
+    .from('views')
+    .upsert({ post_slug: slug, count: 1 }, { onConflict: ['post_slug'] });
+
+  if (error) console.error(error);
+}
+```
+
+3. Call `incrementView(slug)` when the blog post is rendered.
+
+---
+
+Landing Page Copy
+
+MOOD MNKY BlogA Journal of Thought, Exploration, and Connection
+
+Welcome to the MOOD MNKY Blog
+
+A space where scent, sound, and self-reflection intertwine. Here, we share stories, insights, and perspectives that challenge the ordinary—inviting you to pause, breathe, and discover something deeper.
+
+MOOD MNKY is more than a brand—it’s an experience. Rooted in the essence of self-discovery, we curate bespoke journeys through fragrance, technology, and thoughtful design. Our blog is an extension of this ethos, a living journal crafted to inspire, provoke thought, and offer moments of clarity amid the noise of the world.
+
+What You’ll Find Here
+
+1. The Art of Scent & Sensory Exploration
+
+Fragrance is emotion, memory, and energy combined. We explore the science and psychology of scent, diving into how it influences mood, perception, and personal identity. From bespoke fragrance crafting to deep dives into the olfactory senses, our posts invite you to rethink the invisible power of aroma.
+
+2. Stories from the Fringes
+
+MOOD MNKY exists for those who walk their own path—the outsiders, dreamers, and seekers. Our blog amplifies voices often left unheard, sharing narratives that resonate with those who find beauty in the unconventional. These are the stories of resilience, reinvention, and unapologetic self-expression.
+
+3. Technology & Connection
+
+We embrace digital experiences as a bridge to deeper human connection. Our blog explores the intersection of technology, AI, and creativity—unpacking how innovation enhances authenticity rather than replacing it. Expect discussions on self-hosting, automation, and the digital tools that help create meaningful, personal experiences.
+
+4. Gaming, Music, and the Digital Playground
+
+For many of us, identity is shaped in virtual worlds as much as physical ones. We explore the role of gaming, music, and digital culture in personal storytelling, offering insights into how these mediums become mirrors for our own experiences.
+
+5. Philosophy, Mental Health, and Self-Work
+
+Personal growth is an ever-evolving journey. Through reflections on psychology, mindfulness, and self-work, our posts offer nuanced perspectives on the process of becoming—embracing imperfection, exploring shadow work, and navigating the complexities of self-acceptance.
+
+Our Approach
+
+We write not to tell, but to invite. Each post is a conversation, a puzzle, a question left open-ended. The MOOD MNKY blog isn’t here to preach or dictate—it’s here to spark thought, stir emotion, and help you discover your own truth. The world is full of noise. Let’s find the signal.
+
+Explore & Engage
+
+This space is yours as much as it is ours. Engage in the conversation, reflect on the ideas, and if something resonates, share it. The MOOD MNKY experience thrives on community, and this blog is one more way we create that connection.
+
+Scents the Mood…
+
+[Read the Latest Posts →]

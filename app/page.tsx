@@ -1,101 +1,124 @@
-import Image from "next/image";
+import { getPublishedBlogPosts } from '@/lib/notion/client';
+import { BlogGrid } from '@/components/blog-ui/blog-grid';
+import { Hero } from '@/components/hero';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
-export default function Home() {
+export default async function Home() {
+  const { posts } = await getPublishedBlogPosts();
+  const featuredPosts = posts.slice(0, 3);
+  const recentPosts = posts.slice(3, 9);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="flex min-h-screen flex-col">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background backdrop-blur-sm" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Hero />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* Featured Posts */}
+      <section id="featured" className="relative py-24 sm:py-32">
+        <div className="absolute inset-0 bg-muted/30 backdrop-blur-[2px]" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Featured Stories
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Dive into our most impactful narratives, where technology meets humanity 
+              and innovation sparks conversation.
+            </p>
+          </div>
+          <BlogGrid posts={featuredPosts} />
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section id="categories" className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Explore Topics
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Journey through our diverse collection of insights and experiences.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => (
+              <Link
+                key={category.title}
+                href={category.href}
+                className="group relative overflow-hidden rounded-lg glass hover:glass-hover hover-lift"
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/60" />
+                <div className="relative aspect-[4/3] p-6 flex flex-col justify-end">
+                  <h3 className="text-xl font-semibold text-foreground">{category.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{category.description}</p>
+                  <div className="mt-4 flex items-center text-primary">
+                    <span className="text-sm font-medium group-hover:translate-x-1 transition-transform">
+                      Explore
+                    </span>
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Posts */}
+      <section className="relative py-24 sm:py-32">
+        <div className="absolute inset-0 bg-muted/30 backdrop-blur-[2px]" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Latest Insights
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Stay updated with our newest perspectives and discoveries.
+            </p>
+          </div>
+          <BlogGrid posts={recentPosts} />
+        </div>
+      </section>
+    </main>
   );
 }
+
+const categories = [
+  {
+    title: 'The Art of Scent',
+    description: 'Explore the science and psychology of fragrance, and how it shapes our experiences.',
+    href: '/blog/category/scent',
+  },
+  {
+    title: 'Stories from the Fringes',
+    description: 'Narratives of resilience, reinvention, and unapologetic self-expression.',
+    href: '/blog/category/stories',
+  },
+  {
+    title: 'Technology & Connection',
+    description: 'Where innovation meets human experience in the digital age.',
+    href: '/blog/category/tech',
+  },
+  {
+    title: 'Gaming & Digital Culture',
+    description: 'Exploring identity and community in virtual worlds.',
+    href: '/blog/category/gaming',
+  },
+  {
+    title: 'Philosophy & Mental Health',
+    description: 'Perspectives on personal growth, mindfulness, and self-discovery.',
+    href: '/blog/category/philosophy',
+  },
+  {
+    title: 'Creative Expression',
+    description: 'Art, music, and the many ways we make meaning.',
+    href: '/blog/category/creativity',
+  },
+];
