@@ -13,6 +13,14 @@ interface CodeProps {
   children?: React.ReactNode;
 }
 
+// Helper function to generate heading ID
+function generateId(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 export function Markdown({ children }: MarkdownProps) {
   return (
     <ReactMarkdown
@@ -39,6 +47,23 @@ export function Markdown({ children }: MarkdownProps) {
               {children}
             </code>
           );
+        },
+        // Add IDs to headings for table of contents links
+        h1({ children, ...props }) {
+          const id = generateId(String(children));
+          return <h1 id={id} {...props}>{children}</h1>;
+        },
+        h2({ children, ...props }) {
+          const id = generateId(String(children));
+          return <h2 id={id} {...props}>{children}</h2>;
+        },
+        h3({ children, ...props }) {
+          const id = generateId(String(children));
+          return <h3 id={id} {...props}>{children}</h3>;
+        },
+        h4({ children, ...props }) {
+          const id = generateId(String(children));
+          return <h4 id={id} {...props}>{children}</h4>;
         },
       }}
     >

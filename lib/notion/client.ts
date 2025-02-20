@@ -11,6 +11,55 @@ if (!process.env.NOTION_BLOG_DATABASE_ID) {
   throw new Error('Missing NOTION_BLOG_DATABASE_ID environment variable');
 }
 
+interface TocItem {
+  id: string;
+  text: string;
+  level: number;
+  items: TocItem[];
+}
+
+// Helper function to generate table of contents from markdown content
+function generateTableOfContents(markdown: string) {
+  const headingRegex = /^(#{1,6})\s+(.+?)(?:\s*{#[\w-]+})?\s*$/gm;
+  const tableOfContents: TocItem[] = [];
+  const stack: TocItem[] = [];
+  
+  let match;
+  while ((match = headingRegex.exec(markdown)) !== null) {
+    const level = match[1].length;
+    // Clean the text by removing any inline markdown
+    const text = match[2]
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links but keep text
+      .replace(/[_*~`]+/g, '') // Remove emphasis markers
+      .trim();
+    
+    const id = text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    
+    const item: TocItem = { id, text, level, items: [] };
+    
+    // Find the appropriate parent for this heading
+    while (stack.length > 0) {
+      if (stack[stack.length - 1].level < level) {
+        stack[stack.length - 1].items.push(item);
+        stack.push(item);
+        break;
+      }
+      stack.pop();
+    }
+    
+    // If no parent found, add to root level
+    if (stack.length === 0) {
+      tableOfContents.push(item);
+      stack.push(item);
+    }
+  }
+  
+  return tableOfContents;
+}
+
 export const notion = new Client({
   auth: process.env.NOTION_API_KEY,
   notionVersion: '2022-06-28',
@@ -52,12 +101,18 @@ export interface BlogPost {
   publishedAt: string;
   excerpt: string;
   coverImage?: string;
+  heroBackground?: string;
+  heroOverlay?: 'none' | 'light' | 'dark' | 'gradient';
   author?: string;
+  authorBio?: string;
+  category?: string;
   tags: string[];
   content?: string;
   seoTitle?: string;
   seoDescription?: string;
   lastEditedAt: string;
+  readingTime?: number;
+  tableOfContents?: TocItem[];
 }
 
 export interface NotionQueryOptions {
@@ -73,6 +128,7 @@ export interface NotionQueryOptions {
   }>;
   pageSize?: number;
   startCursor?: string;
+  includeContent?: boolean;
 }
 
 export async function getPublishedBlogPosts(options: NotionQueryOptions = {}): Promise<{
@@ -104,9 +160,24 @@ export async function getPublishedBlogPosts(options: NotionQueryOptions = {}): P
       ...(options.startCursor ? { start_cursor: options.startCursor } : {}),
     });
 
-    const posts = response.results
-      .filter((page): page is PageObjectResponse => 'properties' in page)
-      .map(pageToPost);
+    const posts = await Promise.all(
+      response.results
+        .filter((page): page is PageObjectResponse => 'properties' in page)
+        .map(async (page) => {
+          const post = pageToPost(page);
+          
+          if (options.includeContent) {
+            const mdBlocks = await n2m.pageToMarkdown(page.id);
+            const content = n2m.toMarkdownString(mdBlocks);
+            return {
+              ...post,
+              content: content.parent
+            };
+          }
+          
+          return post;
+        })
+    );
 
     return {
       posts,
@@ -147,10 +218,12 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
     const post = pageToPost(page as PageObjectResponse);
     const mdBlocks = await n2m.pageToMarkdown(page.id);
     const content = n2m.toMarkdownString(mdBlocks);
+    const markdown = content.parent;
 
     return {
       ...post,
-      content: content.parent,
+      content: markdown,
+      tableOfContents: generateTableOfContents(markdown),
     };
   } catch (error) {
     if (error instanceof Error && 'isAxiosError' in error) {
@@ -241,6 +314,25 @@ function pageToPost(page: PageObjectResponse): BlogPost {
     return String(value || defaultValue);
   };
 
+  // Get page cover (banner) image
+  const getCoverImage = (page: PageObjectResponse): string | undefined => {
+    if (!page.cover) return undefined;
+    
+    if (page.cover.type === 'external') {
+      return page.cover.external.url;
+    }
+    
+    if (page.cover.type === 'file') {
+      return page.cover.file.url;
+    }
+    
+    return undefined;
+  };
+
+  // Calculate reading time based on content length (if available)
+  const content = getTextContent(properties.Content, ['rich_text', 0, 'plain_text']);
+  const readingTime = content ? Math.ceil(content.split(/\s+/).length / 200) : undefined;
+
   return {
     id: page.id,
     title: getTextContent(properties.Title, ['title', 0, 'plain_text']),
@@ -258,9 +350,25 @@ function pageToPost(page: PageObjectResponse): BlogPost {
         ['files', 0, 'external', 'url'],
         undefined
       ),
+    heroBackground: getCoverImage(page),
+    heroOverlay: getPropertyValue<'none' | 'light' | 'dark' | 'gradient'>(
+      properties['Hero Overlay'],
+      ['select', 'name'],
+      'gradient'
+    ),
     author: getPropertyValue<string | undefined>(
       properties.Author,
       ['people', 0, 'name'],
+      undefined
+    ),
+    authorBio: getPropertyValue<string | undefined>(
+      properties.AuthorBio,
+      ['rich_text', 0, 'plain_text'],
+      undefined
+    ),
+    category: getPropertyValue<string | undefined>(
+      properties.Category,
+      ['select', 'name'],
       undefined
     ),
     tags: getPropertyValue<Array<{ name: string }>>(
@@ -275,5 +383,11 @@ function pageToPost(page: PageObjectResponse): BlogPost {
       undefined
     ),
     lastEditedAt: page.last_edited_time,
+    readingTime,
+    tableOfContents: getPropertyValue<TocItem[]>(
+      properties.TableOfContents,
+      ['multi_select'],
+      []
+    ),
   };
 } 

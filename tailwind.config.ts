@@ -16,7 +16,7 @@ export default {
   			foreground: 'hsl(var(--foreground))',
   			gold: {
   				light: 'hsl(var(--gold-light))',
-  				dark: 'hsl(var(--gold-dark))',
+  				dark: 'hsl(var(--gold-dark))'
   			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
@@ -90,33 +90,45 @@ export default {
   				}
   			},
   			float: {
-  				'0%, 100%': { transform: 'translateY(0)' },
-  				'50%': { transform: 'translateY(-10px)' },
+  				'0%, 100%': {
+  					transform: 'translateY(0)'
+  				},
+  				'50%': {
+  					transform: 'translateY(-10px)'
+  				}
   			},
   			'text-shimmer': {
-  				'0%': { backgroundPosition: '0% 50%' },
-  				'100%': { backgroundPosition: '100% 50%' },
+  				'0%': {
+  					backgroundPosition: '0% 50%'
+  				},
+  				'100%': {
+  					backgroundPosition: '100% 50%'
+  				}
   			},
   			'glow-pulse': {
-  				'0%, 100%': { opacity: '1' },
-  				'50%': { opacity: '0.5' },
-  			},
+  				'0%, 100%': {
+  					opacity: '1'
+  				},
+  				'50%': {
+  					opacity: '0.5'
+  				}
+  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'float': 'float 6s ease-in-out infinite',
+  			float: 'float 6s ease-in-out infinite',
   			'text-shimmer': 'text-shimmer 2.5s linear infinite',
-  			'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+  			'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
   			'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-  			'gradient-gold': 'linear-gradient(to right, hsl(var(--gold-light)), hsl(var(--gold-dark)))',
+  			'gradient-gold': 'linear-gradient(to right, hsl(var(--gold-light)), hsl(var(--gold-dark)))'
   		},
   		backdropBlur: {
-  			xs: '2px',
-  		},
+  			xs: '2px'
+  		}
   	}
   },
   plugins: [animatePlugin, typographyPlugin],
