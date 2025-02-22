@@ -9,10 +9,12 @@ body {
 @layer base {
   :root {
     --background: 0 0% 98%;
+    --background-alt: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     
     --gold-light: 41 100% 60%;
     --gold-dark: 41 100% 45%;
+    --gold-mnky: 41 100% 60%; /* #FFBE33 */
     
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -52,10 +54,12 @@ body {
 
   .dark {
     --background: 240 10% 3.9%;
+    --background-alt: 240 8% 6%;
     --foreground: 0 0% 98%;
     
     --gold-light: 41 100% 60%;
     --gold-dark: 41 100% 45%;
+    --gold-mnky: 41 100% 60%; /* #FFBE33 */
     
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -120,6 +124,52 @@ body {
     @apply glass rounded-lg;
   }
 
+  /* Split background layout */
+  .split-bg {
+    @apply relative min-h-screen;
+  }
+
+  .split-bg::before {
+    @apply content-[''] absolute inset-0 z-[-1];
+    background: linear-gradient(
+      to right,
+      #FFBE33 0%,
+      #FFBE33 50%,
+      hsl(var(--background-alt)) 50%,
+      hsl(var(--background-alt)) 100%
+    );
+  }
+
+  /* Left side decorative overlay */
+  .split-bg::after {
+    @apply content-[''] absolute inset-0 z-[-1] opacity-10;
+    background: 
+      radial-gradient(
+        circle at 25% 25%,
+        hsl(var(--background)) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 75% 75%,
+        hsl(var(--background)) 0%,
+        transparent 50%
+      );
+    clip-path: inset(0 50% 0 0);
+  }
+
+  .auth-container {
+    @apply relative flex min-h-screen flex-col items-center justify-center px-4;
+  }
+
+  .auth-container::before {
+    @apply content-[''] absolute top-0 left-0 w-full h-full z-[-1] opacity-30;
+    background-image: radial-gradient(
+      circle at center,
+      hsl(var(--background)) 0%,
+      transparent 70%
+    );
+  }
+
   /* Gold gradient text */
   .gold-gradient-text {
     @apply bg-gradient-to-r from-[hsl(var(--gold-light))] to-[hsl(var(--gold-dark))] bg-clip-text text-transparent;
@@ -165,6 +215,80 @@ body {
 
   .text-gradient-gold {
     @apply bg-gradient-to-r from-[hsl(var(--gold-light))] via-[hsl(var(--gold-dark))] to-[hsl(var(--gold-light))] bg-clip-text text-transparent;
+  }
+
+  /* Animation utilities */
+  .animate-text-shimmer {
+    @apply bg-[length:200%_100%] animate-[text-shimmer_2s_linear_infinite];
+    background-position: 100%;
+  }
+
+  @keyframes text-shimmer {
+    from {
+      background-position: 0%;
+    }
+    to {
+      background-position: 200%;
+    }
+  }
+
+  /* Auth layout animations */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-700 {
+    animation-delay: 700ms;
   }
 }
 

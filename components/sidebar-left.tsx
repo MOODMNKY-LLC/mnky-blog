@@ -8,7 +8,7 @@ import {
   Command,
   Home,
   Inbox,
-  MessageCircleQuestion,
+  HelpCircle,
   Search,
   Settings2,
   Sparkles,
@@ -94,7 +94,7 @@ const data = {
     {
       title: "Help",
       url: "#",
-      icon: MessageCircleQuestion,
+      icon: HelpCircle,
     },
   ],
   favorites: [
