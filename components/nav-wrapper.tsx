@@ -2,45 +2,43 @@ import { createClient } from '@/utils/supabase/server'
 import { Navbar } from './navbar'
 
 export async function NavWrapper() {
+  const supabase = await createClient()
+
   try {
-    const supabase = await createClient()
-    
-    // First check the session to avoid unnecessary user fetches
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
-      return <Navbar user={null} isAuthenticated={false} />
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return <Navbar 
+        isAuthenticated={false} 
+        user={{ email: undefined, fullName: undefined, avatarUrl: undefined }} 
+      />
     }
 
-    // Only fetch user and profile if we have a session
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return <Navbar user={null} isAuthenticated={false} />
-    }
-
-    // Get profile data
+    // Fetch user profile data
     const { data: profile } = await supabase
       .from('profiles')
       .select('full_name, avatar_url')
       .eq('id', user.id)
       .single()
-    
+
     return (
-      <Navbar 
+      <Navbar
+        isAuthenticated={true}
         user={{
           email: user.email,
           fullName: profile?.full_name,
           avatarUrl: profile?.avatar_url
         }}
-        isAuthenticated={true}
       />
     )
   } catch (error) {
-    // Don't log auth session missing errors as they're expected for logged out users
-    if (!(error instanceof Error && error.message === 'Auth session missing!')) {
-      console.error('Error in NavWrapper:', error)
+    // Log only unexpected errors
+    if (error instanceof Error && !error.message.includes('not found')) {
+      console.error('NavWrapper Error:', error)
     }
-    return <Navbar user={null} isAuthenticated={false} />
+    return <Navbar 
+      isAuthenticated={false} 
+      user={{ email: undefined, fullName: undefined, avatarUrl: undefined }}
+    />
   }
 } 
