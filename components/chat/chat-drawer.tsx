@@ -9,7 +9,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { MessageCircle } from "lucide-react";
+import { StarIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { ChatLayout } from "./chat-layout";
 import MoodMnkyBlogManager from "../MoodMnkyBlogManager";
@@ -25,15 +25,14 @@ export function ChatDrawer({ className }: ChatDrawerProps) {
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           className={cn(
-            "fixed bottom-4 right-4 h-14 w-14 rounded-full bg-amber-500 hover:bg-amber-600 border-2 border-amber-500/20 shadow-lg hover:shadow-amber-500/10",
-            "dark:bg-amber-500/10 dark:hover:bg-amber-500/20 dark:text-amber-500",
+            "h-full w-full rounded-full relative",
             className
           )}
         >
-          <MessageCircle className="h-6 w-6" />
+          <StarIcon className="h-8 w-8 text-amber-500" />
           <span className="sr-only">Open Chat</span>
         </Button>
       </DrawerTrigger>
