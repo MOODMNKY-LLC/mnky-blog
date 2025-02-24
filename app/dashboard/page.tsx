@@ -1,24 +1,15 @@
-import { CardContainer, StatCard, EmptyState } from "@/components/ui/card-container"
+import { ChatDrawer } from "@/components/chat/chat-drawer"
 
-export default function Page() {
+export default function DashboardPage() {
   return (
-    <div className="grid gap-8 w-full">
-      <CardContainer heading="Quick Stats">
-        <div className="grid gap-6 md:grid-cols-3 p-6">
-          <StatCard label="Total Posts" value={0} />
-          <StatCard label="Draft Posts" value={0} />
-          <StatCard label="Published Posts" value={0} />
-        </div>
-      </CardContainer>
-
-      <CardContainer heading="Recent Activity">
-        <EmptyState 
-          message="No recent activity"
-          action="Start Creating"
-        />
-      </CardContainer>
-
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+    <div className="container py-8">
+      <div className="grid gap-4">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-zinc-400">
+          Welcome to your dashboard. Here you can manage your blog posts and interact with BLOG MNKY.
+        </p>
+      </div>
+      <ChatDrawer />
     </div>
   )
 }
