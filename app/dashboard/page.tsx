@@ -24,9 +24,9 @@ import {
   MixIcon,
   RocketIcon,
 } from "@radix-ui/react-icons"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ProfileAvatar } from "@/components/dashboard/profile-avatar"
 
 async function getDashboardData() {
   const supabase = await createClient()
@@ -252,12 +252,11 @@ export default async function DashboardPage() {
           <Card className="border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 mb-4 ring-2 ring-amber-500/20">
-                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || ''} />
-                  <AvatarFallback className="text-lg bg-zinc-900 text-amber-500">
-                    {profile?.full_name?.split(' ').map((n: string) => n[0]).join('') || '??'}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileAvatar 
+                  avatarPath={profile?.avatar_url}
+                  fullName={profile?.full_name}
+                  size="lg"
+                />
                 <div className="space-y-1.5 mb-4">
                   <h2 className="text-xl font-semibold text-zinc-100">{profile?.full_name}</h2>
                   <p className="text-sm text-zinc-400">@{profile?.username}</p>

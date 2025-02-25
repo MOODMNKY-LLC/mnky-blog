@@ -11,6 +11,7 @@ export async function signUp(formData: FormData) {
   
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const fullName = formData.get('full_name') as string
   const redirectTo = formData.get('redirect') as string
 
   const supabase = await createClient()
@@ -26,6 +27,9 @@ export async function signUp(formData: FormData) {
     password,
     options: {
       emailRedirectTo: callbackUrl.toString(),
+      data: {
+        full_name: fullName,
+      }
     },
   })
 

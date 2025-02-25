@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { ImageIcon, Pencil1Icon, PersonIcon } from "@radix-ui/react-icons"
+import { ImageIcon, Pencil1Icon } from "@radix-ui/react-icons"
 import { motion, useSpring, useTransform, useMotionValue, type MotionValue } from "framer-motion"
 import { DockIcon } from "@/components/magicui/dock"
 import { ChatDrawer } from "@/components/chat/chat-drawer"
@@ -146,10 +146,11 @@ function DraggableDock() {
   const mouseY = useMotionValue(0);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     async function getProfile() {
-      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
@@ -163,6 +164,26 @@ function DraggableDock() {
     }
     getProfile();
   }, []);
+
+  useEffect(() => {
+    async function downloadImage(path: string) {
+      try {
+        const { data, error } = await supabase.storage.from('avatars').download(path)
+        if (error) {
+          throw error
+        }
+
+        const url = URL.createObjectURL(data)
+        setAvatarUrl(url)
+      } catch (error) {
+        console.log('Error downloading avatar:', error)
+      }
+    }
+
+    if (profile?.avatar_url) {
+      downloadImage(profile.avatar_url)
+    }
+  }, [profile?.avatar_url, supabase]);
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -245,30 +266,40 @@ function DraggableDock() {
               </div>
             </VerticalDockIcon>
             <VerticalDockIcon mouseY={mouseY}>
-              {profile && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="group h-full w-full rounded-full relative transition-all duration-300">
-                      <div className="absolute inset-0 rounded-full bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md" />
-                      <div className="absolute inset-[-2px] rounded-full bg-gradient-to-b from-amber-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
-                      <ProfileSheet user={user}>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="h-full w-full rounded-full flex items-center justify-center relative z-10"
-                        >
-                          <PersonIcon className="h-8 w-8 text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110" />
-                        </Button>
-                      </ProfileSheet>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-zinc-900/90 border-zinc-800/50 text-amber-500/90">
-                    <p>Edit Profile</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="group h-full w-full rounded-full relative transition-all duration-300">
+                    <div className="absolute inset-0 rounded-full bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md" />
+                    <div className="absolute inset-[-2px] rounded-full bg-gradient-to-b from-amber-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                    <ProfileSheet user={user}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-full w-full rounded-full flex items-center justify-center relative z-10"
+                      >
+                        {avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt={profile?.full_name || 'Avatar'}
+                            width={32}
+                            height={32}
+                            className="rounded-full object-cover ring-2 ring-amber-500/20"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center text-sm font-medium">
+                            {profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
+                          </div>
+                        )}
+                      </Button>
+                    </ProfileSheet>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-zinc-900/90 border-zinc-800/50 text-amber-500/90">
+                  <p>Edit Profile</p>
+                </TooltipContent>
+              </Tooltip>
             </VerticalDockIcon>
           </motion.div>
         </div>

@@ -7,6 +7,8 @@ import { ThemeSwitcher } from './theme-switcher'
 import { Menu, User, Settings, LogOut } from 'lucide-react'
 import { Button } from './ui/button'
 import { Search } from './search'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
 import {
   Sheet,
   SheetContent,
@@ -22,8 +24,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarFallback } from './ui/avatar'
 import { signOut } from '@/app/actions'
+import { AvatarCircles } from './avatar-circles'
 
 interface NavbarProps {
   user: {
@@ -52,6 +55,28 @@ const privateNavigation = [
 export function Navbar({ user, isAuthenticated }: NavbarProps) {
   const pathname = usePathname()
   const navigation = isAuthenticated ? privateNavigation : publicNavigation
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function downloadImage(path: string) {
+      try {
+        const { data, error } = await supabase.storage.from('avatars').download(path)
+        if (error) {
+          throw error
+        }
+
+        const url = URL.createObjectURL(data)
+        setAvatarUrl(url)
+      } catch (error) {
+        console.log('Error downloading avatar:', error)
+      }
+    }
+
+    if (user?.avatarUrl) {
+      downloadImage(user.avatarUrl)
+    }
+  }, [user?.avatarUrl, supabase])
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
@@ -106,13 +131,25 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
             <div className="hidden md:flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={user?.avatarUrl} alt={user?.fullName} />
-                      <AvatarFallback>
-                        {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+                    {avatarUrl ? (
+                      <AvatarCircles
+                        avatars={[
+                          {
+                            imageUrl: avatarUrl,
+                            profileUrl: '/dashboard/profile'
+                          }
+                        ]}
+                        size={36}
+                        showLink={false}
+                      />
+                    ) : (
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>
+                          {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -210,12 +247,24 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
                   {isAuthenticated ? (
                     <div className="flex flex-col gap-2">
                       <div className="px-4 py-2 flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user?.avatarUrl} alt={user?.fullName} />
-                          <AvatarFallback>
-                            {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
+                        {avatarUrl ? (
+                          <AvatarCircles
+                            avatars={[
+                              {
+                                imageUrl: avatarUrl,
+                                profileUrl: '/dashboard/profile'
+                              }
+                            ]}
+                            size={32}
+                            showLink={false}
+                          />
+                        ) : (
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>
+                              {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
                         <div className="flex flex-col">
                           <p className="text-sm font-medium leading-none">
                             {user?.fullName}

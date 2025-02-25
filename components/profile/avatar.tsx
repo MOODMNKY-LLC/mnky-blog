@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import Image from 'next/image'
-import { Icons } from "@/components/icons"
+import { Loader2Icon, UploadIcon } from "lucide-react"
 
 export default function Avatar({
   uid,
@@ -17,7 +17,7 @@ export default function Avatar({
   onUpload: (url: string) => void
 }) {
   const supabase = createClient()
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(url)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
@@ -46,55 +46,29 @@ export default function Avatar({
         throw new Error('You must select an image to upload.')
       }
 
-      if (!uid) {
-        throw new Error('User ID is required for upload.')
-      }
-
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const fileName = `${uid}.${fileExt}`
+      const filePath = `${uid}-${Math.random()}.${fileExt}`
 
-      console.log('Uploading file:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        fileName
-      })
-
-      // First, try to remove any existing avatar
-      try {
-        await supabase.storage
-          .from('avatars')
-          .remove([fileName])
-      } catch (removeError) {
-        console.log('No existing avatar to remove or error:', removeError)
-      }
-
-      // Upload new avatar
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type
-        })
+        .upload(filePath, file)
 
       if (uploadError) {
-        console.error('Upload error:', uploadError)
         throw uploadError
       }
 
-      console.log('Upload successful:', data)
-      onUpload(fileName)
+      onUpload(filePath)
     } catch (error) {
-      console.error('Avatar upload error:', error)
-      alert(error instanceof Error ? error.message : 'Error uploading avatar!')
+      console.log('Error uploading avatar: ', error)
+      alert('Error uploading avatar!')
     } finally {
       setUploading(false)
     }
   }
 
   return (
-    <div>
+    <div className="flex flex-col items-center gap-4">
       {avatarUrl ? (
         <Image
           width={size}
@@ -114,21 +88,24 @@ export default function Avatar({
         </div>
       )}
       <div style={{ width: size }}>
-        <label className="button primary block" htmlFor="single">
+        <label 
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800/50 hover:text-amber-500"
+          htmlFor="single"
+        >
           {uploading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Icons.spinner className="h-4 w-4 animate-spin" />
+            <>
+              <Loader2Icon className="h-4 w-4 animate-spin" />
               Uploading...
-            </span>
+            </>
           ) : (
-            'Upload'
+            <>
+              <UploadIcon className="h-4 w-4" />
+              Upload Avatar
+            </>
           )}
         </label>
         <input
-          style={{
-            visibility: 'hidden',
-            position: 'absolute',
-          }}
+          className="sr-only"
           type="file"
           id="single"
           accept="image/*"

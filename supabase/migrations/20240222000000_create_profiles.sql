@@ -211,7 +211,7 @@ begin
     ),
     coalesce(
       new.raw_user_meta_data->>'avatar_url',
-      'https://api.dicebear.com/7.x/pixel-art/svg?seed=' || new.id::text
+      'https://api.dicebear.com/7.x/pixel-art/png?seed=' || new.id::text
     ),
     coalesce(
       new.raw_user_meta_data->>'full_name',

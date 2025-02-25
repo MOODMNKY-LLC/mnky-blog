@@ -31,72 +31,109 @@ function SubmitButton() {
   )
 }
 
+const inputClasses = "border-zinc-800 bg-zinc-900/50 text-zinc-100 placeholder:text-zinc-500 focus:border-[#F7B32B]/50 focus:ring-[#F7B32B]/5"
+
 export function SignUpForm({ redirect, email }: { redirect?: string; email?: string }) {
-  const [showPassword, setShowPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
-  return (
-    <form action={signUp} className="w-full max-w-sm space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#F7B32B]">Create an account</h1>
-        <p className="text-sm text-zinc-500">Enter your email below to create your account</p>
-      </div>
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPasswordError(null)
 
-      {error && (
-        <Alert variant="destructive" className="border-red-500/20 text-red-400 bg-red-900/10">
-          <Icons.warning className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+    const formData = new FormData(event.currentTarget)
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirm_password') as string
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match")
+      return
+    }
+
+    // Submit the form programmatically
+    signUp(formData)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#F7B32B]">
+          Create your account
+        </h1>
+        <p className="text-sm text-zinc-500">
+          Enter your details to get started
+        </p>
+      </div>
+      
+      {(error || passwordError) && (
+        <Alert variant="destructive" className="border-red-500/20 bg-red-900/10">
+          <AlertDescription>{passwordError || error}</AlertDescription>
         </Alert>
       )}
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-zinc-200">Email</Label>
+        <div>
+          <Label htmlFor="full_name" className="text-zinc-200">
+            Full Name
+          </Label>
+          <Input
+            id="full_name"
+            name="full_name"
+            type="text"
+            required
+            placeholder="John Doe"
+            className={inputClasses}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="email" className="text-zinc-200">
+            Email
+          </Label>
           <Input
             id="email"
-            type="email"
             name="email"
-            placeholder="m@example.com"
-            defaultValue={email}
+            type="email"
             required
-            className="border-zinc-800 bg-zinc-900/50 text-zinc-100 placeholder:text-zinc-500 focus:border-[#F7B32B]/50 focus:ring-[#F7B32B]/5"
+            defaultValue={email}
+            placeholder="you@example.com"
+            className={inputClasses}
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="password" className="text-zinc-200">Password</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-xs text-zinc-400 hover:text-[#F7B32B] hover:bg-[#F7B32B]/5"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <Icons.eyeOff className="h-4 w-4" />
-              ) : (
-                <Icons.eye className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+        <div>
+          <Label htmlFor="password" className="text-zinc-200">
+            Password
+          </Label>
           <Input
             id="password"
-            type={showPassword ? "text" : "password"}
             name="password"
+            type="password"
             required
-            minLength={8}
-            className="border-zinc-800 bg-zinc-900/50 text-zinc-100 placeholder:text-zinc-500 focus:border-[#F7B32B]/50 focus:ring-[#F7B32B]/5"
+            placeholder="••••••••"
+            className={inputClasses}
           />
         </div>
 
-        <SubmitButton />
+        <div>
+          <Label htmlFor="confirm_password" className="text-zinc-200">
+            Confirm Password
+          </Label>
+          <Input
+            id="confirm_password"
+            name="confirm_password"
+            type="password"
+            required
+            placeholder="••••••••"
+            className={inputClasses}
+          />
+        </div>
+
+        <input type="hidden" name="redirect" value={redirect} />
       </div>
 
-      {redirect && (
-        <input type="hidden" name="redirect" value={redirect} />
-      )}
+      <SubmitButton />
 
       <div className="text-center text-sm text-zinc-500">
         Already have an account?{" "}
