@@ -1,59 +1,20 @@
--- Set up Storage for Avatars
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true)
-ON CONFLICT (id) DO NOTHING;
+-- Set up Storage!
+insert into storage.buckets (id, name)
+  values ('avatars', 'avatars');
 
--- Set up access controls for storage
-CREATE POLICY "Avatar images are publicly accessible"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'avatars');
+-- Set up access controls for storage.
+-- See https://supabase.com/docs/guides/storage#policy-examples for more details.
+create policy "Avatar images are publicly accessible." on storage.objects
+  for select using (bucket_id = 'avatars');
 
-CREATE POLICY "Authenticated users can upload avatars"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'avatars' 
-    AND auth.role() = 'authenticated'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
+create policy "Anyone can upload an avatar." on storage.objects
+  for insert with check (bucket_id = 'avatars');
 
-CREATE POLICY "Users can update their own avatar"
-  ON storage.objects FOR UPDATE
-  USING (
-    bucket_id = 'avatars' 
-    AND auth.role() = 'authenticated'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
+create policy "Anyone can update their avatar." on storage.objects
+  for update using (bucket_id = 'avatars');
 
-CREATE POLICY "Users can delete their own avatar"
-  ON storage.objects FOR DELETE
-  USING (
-    bucket_id = 'avatars' 
-    AND auth.role() = 'authenticated'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
-
--- Create function to handle avatar updates
-CREATE OR REPLACE FUNCTION public.handle_avatar_update()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- If avatar_url has changed and old avatar exists, delete it
-  IF OLD.avatar_url IS DISTINCT FROM NEW.avatar_url AND OLD.avatar_url IS NOT NULL THEN
-    -- Delete old avatar file
-    DELETE FROM storage.objects
-    WHERE bucket_id = 'avatars'
-    AND name = OLD.avatar_url;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger for avatar updates
-CREATE TRIGGER on_avatar_update
-  BEFORE UPDATE OF avatar_url ON public.profiles
-  FOR EACH ROW
-  WHEN (OLD.avatar_url IS DISTINCT FROM NEW.avatar_url)
-  EXECUTE FUNCTION public.handle_avatar_update();
+create policy "Anyone can delete their avatar." on storage.objects
+  for delete using (bucket_id = 'avatars');
 
 -- Create function to handle storage cleanup on profile deletion
 CREATE OR REPLACE FUNCTION public.handle_deleted_user()
@@ -62,7 +23,7 @@ BEGIN
   -- Delete all storage objects for the user
   DELETE FROM storage.objects
   WHERE bucket_id = 'avatars'
-  AND (storage.foldername(name))[1] = OLD.id::text;
+  AND name LIKE OLD.id || '%';
   
   RETURN OLD;
 END;

@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { Avatar } from './avatar'
+import Avatar from './avatar'
 import { Icons } from "@/components/icons"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -58,6 +58,7 @@ export function ProfileForm({ user, onClose }: ProfileFormProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -106,6 +107,9 @@ export function ProfileForm({ user, onClose }: ProfileFormProps) {
           bio: data.bio,
           avatar_url: data.avatar_url,
         })
+        if (data.avatar_url) {
+          setAvatarUrl(data.avatar_url)
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -123,6 +127,54 @@ export function ProfileForm({ user, onClose }: ProfileFormProps) {
   useEffect(() => {
     getProfile()
   }, [getProfile])
+
+  async function updateProfile({
+    username,
+    full_name,
+    website,
+    avatar_url,
+  }: {
+    username?: string | null
+    full_name?: string | null
+    website?: string | null
+    avatar_url?: string
+  }) {
+    try {
+      setLoading(true)
+
+      if (!user?.id) {
+        throw new Error('User ID is required')
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        username: username ?? profile?.username,
+        full_name: full_name ?? profile?.full_name,
+        website: website ?? profile?.website,
+        avatar_url: avatar_url ?? profile?.avatar_url,
+        updated_at: new Date().toISOString(),
+      })
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      })
+
+      router.refresh()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('Error updating profile:', errorMessage)
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function onSubmit(values: FormData) {
     try {
@@ -160,10 +212,6 @@ export function ProfileForm({ user, onClose }: ProfileFormProps) {
     }
   }
 
-  const onAvatarUpload = useCallback((url: string) => {
-    form.setValue('avatar_url', url)
-  }, [form])
-
   if (!user) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -183,13 +231,17 @@ export function ProfileForm({ user, onClose }: ProfileFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Avatar
-          uid={user.id}
-          url={form.watch('avatar_url')}
-          size={150}
-          onUpload={onAvatarUpload}
-          className="mx-auto"
-        />
+        <div className="flex justify-center">
+          <Avatar
+            uid={user?.id ?? null}
+            url={avatarUrl}
+            size={150}
+            onUpload={(url) => {
+              setAvatarUrl(url)
+              updateProfile({ avatar_url: url })
+            }}
+          />
+        </div>
 
         <div className="space-y-4">
           <FormItem>
