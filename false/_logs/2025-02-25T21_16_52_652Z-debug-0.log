@@ -1,0 +1,19 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\Simeon\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.1.0
+2 info using node@v22.11.0
+3 silly config load:file:C:\Users\Simeon\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\DEV-MNKY\MOOD_MNKY\Apps\mnky-blog\.npmrc
+5 silly config load:file:C:\Users\Simeon\.npmrc
+6 silly config load:file:C:\Users\Simeon\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm run lint
+8 verbose argv "run" "lint" "--cache" "false"
+9 verbose logfile logs-max:10 dir:C:\DEV-MNKY\MOOD_MNKY\Apps\mnky-blog\false\_logs\2025-02-25T21_16_52_652Z-
+10 verbose logfile C:\DEV-MNKY\MOOD_MNKY\Apps\mnky-blog\false\_logs\2025-02-25T21_16_52_652Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET 200 https://registry.npmjs.org/npm 165ms
+13 verbose cwd C:\DEV-MNKY\MOOD_MNKY\Apps\mnky-blog
+14 verbose os Windows_NT 10.0.26100
+15 verbose node v22.11.0
+16 verbose npm  v11.1.0
+17 verbose exit 1
+18 verbose code 1

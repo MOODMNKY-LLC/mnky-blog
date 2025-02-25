@@ -4,17 +4,11 @@ import { createClient } from "@/utils/supabase/server"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 export const metadata: Metadata = {
-  title: "Verify Email | MOOD MNKY",
-  description: "Verify your email address",
+  title: "Verify Email",
+  description: "Verify your email address to continue.",
 }
 
-interface Props {
-  params: Promise<{ [key: string]: string }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-export default async function VerifyEmailPage({ searchParams }: Props) {
-  const params = await searchParams
+export default async function VerifyEmailPage() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
 

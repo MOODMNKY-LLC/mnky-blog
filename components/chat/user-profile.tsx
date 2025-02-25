@@ -48,6 +48,7 @@ interface UserMetadata {
   avatar_url?: string;
   full_name?: string;
   email?: string;
+  username?: string;
 }
 
 interface User {
@@ -65,6 +66,9 @@ const formSchema = z.object({
     message: "System prompt must be at least 10 characters.",
   }),
   temperature: z.number().min(0).max(1).default(0.7),
+  full_name: z.string().optional(),
+  username: z.string().optional(),
+  avatar_url: z.string().optional(),
 });
 
 export function UserProfile({ className, sidebarOpen = true }: UserProfileProps) {
@@ -118,7 +122,15 @@ export function UserProfile({ className, sidebarOpen = true }: UserProfileProps)
     }
 
     getProfile();
-  }, []);
+  }, [form, supabase]);
+
+  React.useEffect(() => {
+    if (user) {
+      form.setValue('full_name', user.user_metadata.full_name || '');
+      form.setValue('username', user.user_metadata.username || '');
+      form.setValue('avatar_url', user.user_metadata.avatar_url || '');
+    }
+  }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {

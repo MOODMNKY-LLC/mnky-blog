@@ -1,11 +1,8 @@
 import { getPublishedBlogPosts } from '@/lib/notion/client';
-import { BlogGrid } from '@/components/blog-ui/blog-grid';
 import { Hero } from '@/components/hero';
-import Link from 'next/link';
-import { ArrowRight, Filter, SortDesc } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, BookOpen, Users, Sparkles } from 'lucide-react';
 import { LatestPost } from '@/components/blog-ui/latest-post';
-import { CategoryTabs } from '@/components/blog-ui/category-tabs';
+import { BentoGrid, BentoCard } from '@/components/magicui/bento-grid';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -19,82 +16,307 @@ export default async function Home() {
   const latestPost = posts[0];
   const recentPosts = posts.slice(1, 7);
 
-  // Get unique categories from all posts
-  const categories = Array.from(new Set(posts.flatMap(post => post.category ? [post.category] : [])));
-
   return (
     <main className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden -mt-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background backdrop-blur-sm" />
+      <section className="relative overflow-hidden -mt-12">
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Hero />
         </div>
       </section>
 
-      {/* Latest Post */}
-      {latestPost && (
-        <section className="relative -mt-40 pb-4 sm:pb-6">
-          <div className="absolute inset-0 bg-muted/30 backdrop-blur-[2px]" />
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center mb-6 pt-12">
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Latest Story
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Explore our most recent insights and discoveries
-              </p>
-            </div>
-            <LatestPost post={latestPost} />
-          </div>
-        </section>
-      )}
+      {/* Main Content Sections */}
+      <section className="relative -mt-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <BentoGrid className="grid-cols-1 lg:grid-cols-5 gap-6">
+            {/* Featured Story */}
+            {latestPost && (
+              <BentoCard
+                name="Featured Story"
+                className="col-span-1 lg:col-span-3 min-h-[36rem]"
+                background={<LatestPost post={latestPost} />}
+                Icon={Sparkles}
+                description={
+                  <span className="text-sm text-muted-foreground tracking-wider">
+                    Dive into our latest exploration of ideas and insights
+                  </span>
+                }
+                href={`/blog/${latestPost.slug}`}
+                cta={
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                    Read More
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                }
+              />
+            )}
 
-      {/* Category Navigation */}
-      <section className="py-6 sm:py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Browse by Category
-              </h2>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <SortDesc className="h-4 w-4" />
-                  Sort
-                </Button>
+            {/* Right Side Cards Stack */}
+            <div className="col-span-1 lg:col-span-2 grid grid-cols-1 gap-6">
+              {/* Knowledge Library */}
+              <BentoCard
+                name="Knowledge Library"
+                className="min-h-[11rem]"
+                background={
+                  <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                  </div>
+                }
+                Icon={BookOpen}
+                description={
+                  <span className="text-sm text-muted-foreground tracking-wider">
+                    Curated collection of articles, videos, and essential resources
+                  </span>
+                }
+                href="/library"
+                cta={
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                    Browse Library
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                }
+              />
+
+              {/* Community Hub */}
+              <BentoCard
+                name="Community Hub"
+                className="min-h-[11rem]"
+                background={
+                  <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                  </div>
+                }
+                Icon={Users}
+                description={
+                  <span className="text-sm text-muted-foreground tracking-wider">
+                    Connect with fellow enthusiasts and join the conversation
+                  </span>
+                }
+                href="/community"
+                cta={
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                    Join Community
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                }
+              />
+
+              {/* Latest Insights */}
+              <BentoCard
+                name="Latest Insights"
+                className="min-h-[11rem]"
+                background={
+                  <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                  </div>
+                }
+                Icon={Sparkles}
+                description={
+                  <span className="text-sm text-muted-foreground tracking-wider">
+                    Fresh perspectives and trending discussions from our community
+                  </span>
+                }
+                href="/blog"
+                cta={
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                    Read Blog
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                }
+              />
+            </div>
+
+            {/* Recent Stories Section - Full Width */}
+            <div className="col-span-1 lg:col-span-5 space-y-6">
+              {/* Recent Stories Header */}
+              <BentoCard
+                name="Recent Stories"
+                className="min-h-[8rem]"
+                background={
+                  <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                  </div>
+                }
+                Icon={Sparkles}
+                description={
+                  <span className="text-sm text-muted-foreground tracking-wider">
+                    Discover the latest thoughts and insights from our community
+                  </span>
+                }
+                href="/blog"
+                cta={
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                    View All Posts
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                }
+              />
+
+              {/* Recent Story Cards */}
+              <div className="relative overflow-hidden">
+                <div className="flex animate-carousel hover:pause-animation">
+                  {/* First set of cards */}
+                  {[...Array(3)].map((_, index) => {
+                    const post = recentPosts[index];
+                    return post ? (
+                      <div key={post.id} className="w-full md:w-1/3 flex-shrink-0 px-4">
+                        <div className="px-2">
+                          <BentoCard
+                            name={post.title}
+                            className="min-h-[20rem]"
+                            background={
+                              <div className="absolute inset-0">
+                                {post.coverImage ? (
+                                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${post.coverImage})` }}>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+                                  </div>
+                                ) : (
+                                  <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                                )}
+                                <div className="absolute -left-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                                <div className="absolute -right-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                              </div>
+                            }
+                            Icon={Sparkles}
+                            description={
+                              <span className="text-sm text-muted-foreground tracking-wider line-clamp-3">
+                                {post.excerpt}
+                              </span>
+                            }
+                            href={`/blog/${post.slug}`}
+                            cta={
+                              <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                                Read Post
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={`skeleton-${index}`} className="w-full md:w-1/3 flex-shrink-0 px-4">
+                        <div className="px-2">
+                          <BentoCard
+                            name="More Stories Coming"
+                            className="min-h-[20rem] opacity-70 hover:opacity-100 transition-opacity"
+                            background={
+                              <div className="absolute inset-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur">
+                                  <div className="absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,#000000,45%,#1a1a1a,55%,#000000)] bg-[length:200%_100%]" />
+                                </div>
+                                <div className="absolute -left-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                                <div className="absolute -right-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                              </div>
+                            }
+                            Icon={Sparkles}
+                            description={
+                              <div className="space-y-3">
+                                <p className="text-sm text-muted-foreground/80">
+                                  We&apos;re crafting new stories to inspire and engage. Check back soon for fresh perspectives and insights.
+                                </p>
+                                <div className="space-y-2">
+                                  <div className="h-2 w-2/3 bg-muted-foreground/20 rounded animate-pulse" />
+                                  <div className="h-2 w-3/4 bg-muted-foreground/20 rounded animate-pulse" />
+                                </div>
+                              </div>
+                            }
+                            href="/blog"
+                            cta={
+                              <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold opacity-80">
+                                Browse Existing Stories
+                                <ArrowRight className="w-4 h-4" />
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Duplicate set for seamless loop */}
+                  {[...Array(3)].map((_, index) => {
+                    const post = recentPosts[index];
+                    return post ? (
+                      <div key={`${post.id}-duplicate`} className="w-full md:w-1/3 flex-shrink-0 px-4">
+                        <div className="px-2">
+                          <BentoCard
+                            name={post.title}
+                            className="min-h-[20rem]"
+                            background={
+                              <div className="absolute inset-0">
+                                {post.coverImage ? (
+                                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${post.coverImage})` }}>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+                                  </div>
+                                ) : (
+                                  <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur" />
+                                )}
+                                <div className="absolute -left-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                                <div className="absolute -right-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                              </div>
+                            }
+                            Icon={Sparkles}
+                            description={
+                              <span className="text-sm text-muted-foreground tracking-wider line-clamp-3">
+                                {post.excerpt}
+                              </span>
+                            }
+                            href={`/blog/${post.slug}`}
+                            cta={
+                              <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold">
+                                Read Post
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={`skeleton-${index}-duplicate`} className="w-full md:w-1/3 flex-shrink-0 px-4">
+                        <div className="px-2">
+                          <BentoCard
+                            name="More Stories Coming"
+                            className="min-h-[20rem] opacity-70 hover:opacity-100 transition-opacity"
+                            background={
+                              <div className="absolute inset-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/50 to-transparent backdrop-blur">
+                                  <div className="absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,#000000,45%,#1a1a1a,55%,#000000)] bg-[length:200%_100%]" />
+                                </div>
+                                <div className="absolute -left-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                                <div className="absolute -right-[1px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                              </div>
+                            }
+                            Icon={Sparkles}
+                            description={
+                              <div className="space-y-3">
+                                <p className="text-sm text-muted-foreground/80">
+                                  We&apos;re crafting new stories to inspire and engage. Check back soon for fresh perspectives and insights.
+                                </p>
+                                <div className="space-y-2">
+                                  <div className="h-2 w-2/3 bg-muted-foreground/20 rounded animate-pulse" />
+                                  <div className="h-2 w-3/4 bg-muted-foreground/20 rounded animate-pulse" />
+                                </div>
+                              </div>
+                            }
+                            href="/blog"
+                            cta={
+                              <span className="flex items-center gap-2 text-sm font-semibold text-gradient-gold opacity-80">
+                                Browse Existing Stories
+                                <ArrowRight className="w-4 h-4" />
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            <CategoryTabs categories={categories} />
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Posts Grid */}
-      <section className="relative py-6 sm:py-8">
-        <div className="absolute inset-0 bg-muted/30 backdrop-blur-[2px]" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-6">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Recent Stories
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Dive into our collection of thought-provoking articles
-            </p>
-          </div>
-          <BlogGrid posts={recentPosts} />
-          <div className="mt-6 text-center">
-            <Button asChild>
-              <Link href="/blog/archive" className="gap-2">
-                View All Posts
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
+          </BentoGrid>
         </div>
       </section>
     </main>

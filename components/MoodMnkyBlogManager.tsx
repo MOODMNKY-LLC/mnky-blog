@@ -398,9 +398,10 @@ export default function MoodMnkyBlogManager() {
 
   // Cleanup on unmount
   React.useEffect(() => {
+    const currentAbortController = abortControllerRef.current;
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (currentAbortController) {
+        currentAbortController.abort();
       }
     };
   }, []);

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import Image from 'next/image';
 
 interface SidebarContextValue {
   open?: boolean
@@ -145,9 +146,11 @@ const SidebarTrigger = React.forwardRef<
       {...props}
     >
       <div className="w-6 h-6">
-        <img 
-          src="/logo.png" 
+        <Image
+          src="/logo.png"
           alt="Toggle Sidebar"
+          width={24}
+          height={24}
           className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
           style={{ filter: 'brightness(0) saturate(100%) invert(80%) sepia(50%) saturate(1000%) hue-rotate(330deg) brightness(101%) contrast(101%)' }}
         />

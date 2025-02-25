@@ -8,7 +8,11 @@ import {
   PersonIcon,
 } from "@radix-ui/react-icons"
 
-interface DashboardSidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DashboardSidebarProps {
+  // This interface is intentionally left empty as it may be extended in the future
+  // and serves as a base for component props
+  className?: string;
+}
 
 export function DashboardSidebar({ className }: DashboardSidebarProps) {
   return (

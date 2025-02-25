@@ -27,6 +27,7 @@ import {
 import { Avatar, AvatarFallback } from './ui/avatar'
 import { signOut } from '@/app/actions'
 import { AvatarCircles } from './avatar-circles'
+import { ChevronDown } from 'lucide-react'
 
 interface NavbarProps {
   user: {
@@ -37,20 +38,227 @@ interface NavbarProps {
   isAuthenticated: boolean
 }
 
+interface NavigationItem {
+  name: string
+  href: string
+  items?: NavigationItem[]
+}
+
 // Navigation items based on auth state
 const publicNavigation = [
   { name: 'Home', href: '/' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Categories', href: '/#categories' },
-  { name: 'About', href: '/about' },
+  { 
+    name: 'Blog',
+    href: '/blog',
+    items: [
+      { name: 'Latest Posts', href: '/blog' },
+      { name: 'Categories', href: '/blog/categories' },
+      { name: 'Archive', href: '/blog/archive' },
+    ]
+  },
+  { 
+    name: 'Library',
+    href: '/library',
+    items: [
+      { name: 'Articles', href: '/library/articles' },
+      { name: 'Videos', href: '/library/videos' },
+      { name: 'Resources', href: '/library/resources' },
+    ]
+  },
+  { 
+    name: 'Community',
+    href: '/community',
+    items: [
+      { name: 'Forum', href: '/community/forum' },
+      { name: 'Discussions', href: '/community/discussions' },
+      { name: 'Members', href: '/community/members' },
+    ]
+  },
+  { 
+    name: 'About',
+    href: '/about',
+    items: [
+      { name: 'Mission', href: '/about/mission' },
+      { name: 'Team', href: '/about/team' },
+      { name: 'FAQ', href: '/about/faq' },
+      { name: 'Contact', href: '/about/contact' },
+    ]
+  },
 ]
 
 const privateNavigation = [
   { name: 'Home', href: '/' },
-  { name: 'Blog', href: '/blog' },
+  { 
+    name: 'Blog',
+    href: '/blog',
+    items: [
+      { name: 'Latest Posts', href: '/blog' },
+      { name: 'Categories', href: '/blog/categories' },
+      { name: 'Archive', href: '/blog/archive' },
+    ]
+  },
+  { 
+    name: 'Library',
+    href: '/library',
+    items: [
+      { name: 'Articles', href: '/library/articles' },
+      { name: 'Videos', href: '/library/videos' },
+      { name: 'Resources', href: '/library/resources' },
+    ]
+  },
+  { 
+    name: 'Community',
+    href: '/community',
+    items: [
+      { name: 'Forum', href: '/community/forum' },
+      { name: 'Discussions', href: '/community/discussions' },
+      { name: 'Members', href: '/community/members' },
+    ]
+  },
   { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Posts', href: '/dashboard/posts' },
 ]
+
+function NavItem({ 
+  item, 
+  isActive,
+  pathname 
+}: { 
+  item: NavigationItem; 
+  isActive: boolean;
+  pathname: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  if (item.items) {
+    return (
+      <div 
+        className="relative"
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+      >
+        <Link
+          href={item.href}
+          className={cn(
+            'px-4 py-2 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1',
+            'hover:text-primary',
+            isActive 
+              ? 'text-primary bg-primary/10' 
+              : 'text-muted-foreground'
+          )}
+        >
+          {item.name}
+          <ChevronDown className={cn(
+            "h-4 w-4 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )} />
+        </Link>
+        {isOpen && (
+          <div className="absolute top-full left-0 pt-2 min-w-[12rem]">
+            <div className="relative rounded-lg bg-popover shadow-md border p-2">
+              <div className="absolute -top-1 left-6 w-2 h-2 rotate-45 bg-popover border-l border-t" />
+              <div className="relative space-y-1">
+                {item.items.map((subItem) => (
+                  <Link
+                    key={subItem.href}
+                    href={subItem.href}
+                    className={cn(
+                      'block px-3 py-2 rounded-md text-sm transition-colors',
+                      'hover:bg-accent hover:text-accent-foreground',
+                      pathname === subItem.href 
+                        ? 'bg-accent text-accent-foreground' 
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {subItem.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+        'hover:text-primary',
+        isActive 
+          ? 'text-primary bg-primary/10' 
+          : 'text-muted-foreground'
+      )}
+    >
+      {item.name}
+    </Link>
+  )
+}
+
+function MobileNavItem({ 
+  item, 
+  isActive,
+  pathname 
+}: { 
+  item: NavigationItem; 
+  isActive: boolean;
+  pathname: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  if (item.items) {
+    return (
+      <div className="flex flex-col">
+        <Link
+          href={item.href}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-colors text-left flex items-center justify-between',
+            'hover:text-primary hover:bg-primary/10',
+            isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+          )}
+          onClick={(e) => {
+            e.preventDefault()
+            setIsOpen(!isOpen)
+          }}
+        >
+          {item.name}
+          <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+        </Link>
+        {isOpen && (
+          <div className="ml-4 flex flex-col gap-1 mt-1">
+            {item.items.map((subItem) => (
+              <Link
+                key={subItem.href}
+                href={subItem.href}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'hover:text-primary hover:bg-primary/10',
+                  pathname === subItem.href ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+                )}
+              >
+                {subItem.name}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+        'hover:text-primary hover:bg-primary/10',
+        isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+      )}
+    >
+      {item.name}
+    </Link>
+  )
+}
 
 export function Navbar({ user, isAuthenticated }: NavbarProps) {
   const pathname = usePathname()
@@ -94,21 +302,15 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || 
+              (item.items?.some(subItem => pathname === subItem.href) ?? false)
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  'hover:text-primary',
-                  isActive 
-                    ? 'text-primary bg-primary/10' 
-                    : 'text-muted-foreground'
-                )}
-              >
-                {item.name}
-              </Link>
+              <NavItem 
+                key={item.name} 
+                item={item} 
+                isActive={isActive}
+                pathname={pathname}
+              />
             )
           })}
         </div>
@@ -220,19 +422,15 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
                 </SheetHeader>
                 <div className="flex flex-col gap-4 mt-8">
                   {navigation.map((item) => {
-                    const isActive = pathname === item.href
+                    const isActive = pathname === item.href || 
+                      (item.items?.some(subItem => pathname === subItem.href) ?? false)
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={cn(
-                          'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                          'hover:text-primary hover:bg-primary/10',
-                          isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground'
-                        )}
-                      >
-                        {item.name}
-                      </Link>
+                      <MobileNavItem 
+                        key={item.name} 
+                        item={item} 
+                        isActive={isActive}
+                        pathname={pathname}
+                      />
                     )
                   })}
                   <div className="h-px bg-border my-2" />

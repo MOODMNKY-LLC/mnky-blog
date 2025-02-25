@@ -163,7 +163,7 @@ function DraggableDock() {
       }
     }
     getProfile();
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     async function downloadImage(path: string) {
@@ -184,6 +184,13 @@ function DraggableDock() {
       downloadImage(profile.avatar_url)
     }
   }, [profile?.avatar_url, supabase]);
+
+  useEffect(() => {
+    if (user) {
+      // Fetch favorites will be implemented later
+      // fetchFavorites();
+    }
+  }, [user]);
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,

@@ -114,6 +114,33 @@ export default {
   				'50%': {
   					opacity: '0.5'
   				}
+  			},
+  			shimmer: {
+  				'0%': {
+  					'background-position': '-200% 0'
+  				},
+  				'100%': {
+  					'background-position': '200% 0'
+  				}
+  			},
+  			carousel: {
+  				'0%': {
+  					transform: 'translateX(0%)'
+  				},
+  				'100%': {
+  					transform: 'translateX(-50%)'
+  				}
+  			},
+  			shine: {
+  				'0%': {
+  					'background-position': '0% 0%'
+  				},
+  				'50%': {
+  					'background-position': '100% 100%'
+  				},
+  				to: {
+  					'background-position': '0% 0%'
+  				}
   			}
   		},
   		animation: {
@@ -121,7 +148,15 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			float: 'float 6s ease-in-out infinite',
   			'text-shimmer': 'text-shimmer 2.5s linear infinite',
-  			'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
+  			'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+  			shimmer: 'shimmer 2s linear infinite',
+  			carousel: 'carousel 30s linear infinite',
+  			shine: 'shine var(--duration) infinite linear'
+  		},
+  		utilities: {
+  			'.pause-animation': {
+  				'animation-play-state': 'paused'
+  			}
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -133,10 +168,10 @@ export default {
   		},
   		container: {
   			center: true,
-  			padding: "2rem",
+  			padding: '2rem',
   			screens: {
-  				"2xl": "1400px",
-  			},
+  				'2xl': '1400px'
+  			}
   		}
   	}
   },

@@ -38,7 +38,7 @@ export async function signUp(formData: FormData) {
   const supabase = await createClient()
 
   // Check if username is already taken
-  const { data: existingUser, error: usernameError } = await supabase
+  const { data: existingUser } = await supabase
     .from('profiles')
     .select('username')
     .eq('username', username)
