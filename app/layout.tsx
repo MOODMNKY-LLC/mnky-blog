@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { NavWrapper } from "@/components/nav-wrapper";
 import { Footer } from "@/components/footer";
+import { ChatProvider } from "@/components/providers/chat-provider";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -28,6 +29,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <ChatProvider />
           <Toaster />
         </ThemeProvider>
       </body>
