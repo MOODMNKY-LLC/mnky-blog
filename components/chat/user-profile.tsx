@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Settings } from "lucide-react";
+import { AvatarCircles } from "@/components/avatar-circles";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,7 @@ const formSchema = z.object({
 export function UserProfile({ className, sidebarOpen = true }: UserProfileProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -105,6 +106,11 @@ export function UserProfile({ className, sidebarOpen = true }: UserProfileProps)
               systemPrompt: profile.system_prompt || "",
               temperature: profile.temperature || 0.7,
             });
+
+            // Download avatar if exists
+            if (profile.avatar_url) {
+              downloadImage(profile.avatar_url);
+            }
           }
 
           setUser({
@@ -121,7 +127,27 @@ export function UserProfile({ className, sidebarOpen = true }: UserProfileProps)
       }
     }
 
+    async function downloadImage(path: string) {
+      try {
+        const { data, error } = await supabase.storage.from('avatars').download(path);
+        if (error) {
+          throw error;
+        }
+        const url = URL.createObjectURL(data);
+        setAvatarUrl(url);
+      } catch (error) {
+        console.error('Error downloading avatar:', error);
+      }
+    }
+
     getProfile();
+
+    // Cleanup function for avatar URL
+    return () => {
+      if (avatarUrl) {
+        URL.revokeObjectURL(avatarUrl);
+      }
+    };
   }, [form, supabase]);
 
   React.useEffect(() => {
@@ -202,16 +228,26 @@ export function UserProfile({ className, sidebarOpen = true }: UserProfileProps)
             className
           )}
         >
-          <Avatar className="h-6 w-6 ring-1 ring-amber-500/20">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback className="bg-zinc-800 text-amber-500 text-xs">
-              {user?.email?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          {avatarUrl ? (
+            <AvatarCircles
+              avatars={[
+                {
+                  imageUrl: avatarUrl,
+                  profileUrl: '/dashboard/profile'
+                }
+              ]}
+              size={36}
+              showLink={false}
+            />
+          ) : (
+            <div className="h-9 w-9 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center text-sm font-medium ring-1 ring-amber-500/20">
+              {user?.user_metadata?.full_name?.charAt(0) || user?.user_metadata?.username?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+          )}
           {sidebarOpen && (
             <div className="flex flex-col items-start text-left">
               <span className="text-sm truncate">
-                {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                {user?.user_metadata?.full_name || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User'}
               </span>
               <span className="text-xs">
                 <span className="text-amber-500">BLOG</span>{" "}

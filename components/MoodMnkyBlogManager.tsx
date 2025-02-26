@@ -1,6 +1,6 @@
-// app/components/MoodMnkyBlogManager.tsx
-
 'use client';
+
+// app/components/MoodMnkyBlogManager.tsx
 
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
@@ -11,23 +11,135 @@ import { ChatInput } from "./chat/chat-input";
 import MessageLoading from "./chat/message-loading";
 import { cn } from "@/lib/utils";
 import styles from "@/styles/flame-head.module.css";
-import { FlowiseAPI, type ChatMessage } from "@/utils/flowise";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Copy, Speaker } from "lucide-react";
+import { FlowiseService, type IMessage as FlowiseIMessage, type MessageType, type FlowiseStreamResponse } from '@/lib/flowise/client';
+import { createBrowserClient } from '@supabase/ssr';
 
-interface Message extends ChatMessage {
+// Message types
+interface Message {
   id: string;
+  content: string;
+  isUser: boolean;
   timestamp: string;
   pending?: boolean;
   error?: boolean;
+  config?: Record<string, unknown>;
+  avatar?: string;
+}
+
+interface IMessage {
+  message: string;
+  type: 'user' | 'assistant' | 'system';
+}
+
+// Add type definitions for Flowise SDK
+interface FlowiseUploadResponse {
+  filepath: string;
+}
+
+interface FlowiseStream {
+  subscribe(handlers: {
+    next: (message: FlowiseStreamResponse | string) => void;
+    error: (error: Error) => void;
+    complete: () => void;
+  }): Promise<void>;
+}
+
+interface FlowiseMessage extends FlowiseIMessage {
+  message: string;
+  type: MessageType;
+}
+
+interface FlowiseStreamChunk {
+  event: 'start' | 'token' | 'error' | 'end' | 'metadata' | 'sourceDocuments' | 'usedTools';
+  data?: unknown;
+}
+
+interface FlowiseConfig {
+  // Chat Behavior
+  temperature?: number;          // Controls response randomness (0-1)
+  maxTokens?: number;           // Max tokens in response
+  topP?: number;                // Nucleus sampling parameter
+  frequencyPenalty?: number;    // Penalize frequent tokens
+  presencePenalty?: number;     // Penalize repeated information
+  
+  // Memory & Context
+  memoryType?: 'chat' | 'buffer' | 'summary';  // Type of memory to use
+  messageWindow?: number;       // Number of messages to keep in context
+  
+  // Response Formatting
+  systemPrompt?: string;        // Override system prompt
+  responseFormat?: {
+    type: 'markdown' | 'plain' | 'json';
+    schema?: string;           // For JSON responses
+  };
 }
 
 // Message rendering component
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({ message, isStreaming }: { message: Message; isStreaming: boolean }) {
   const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [profile, setProfile] = React.useState<{
+    id: string;
+    avatar_url: string | null;
+    full_name: string | null;
+    username: string | null;
+  } | null>(null);
   const speechRef = React.useRef<SpeechSynthesisUtterance | null>(null);
   const { toast } = useToast();
+  const supabase = React.useMemo(() => createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  ), []);
+
+  // Fetch user profile and avatar
+  React.useEffect(() => {
+    async function getProfile() {
+      if (message.isUser) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          setProfile(data);
+        }
+      }
+    }
+    getProfile();
+  }, [message.isUser, supabase]);
+
+  // Download and set avatar URL
+  React.useEffect(() => {
+    async function downloadImage(path: string) {
+      try {
+        const { data, error } = await supabase.storage.from('avatars').download(path);
+        if (error) {
+          throw error;
+        }
+        const url = URL.createObjectURL(data);
+        setAvatarUrl(url);
+      } catch (error) {
+        console.log('Error downloading avatar:', error);
+      }
+    }
+
+    if (profile?.avatar_url) {
+      downloadImage(profile.avatar_url);
+    }
+  }, [profile?.avatar_url, supabase]);
+
+  // Cleanup avatar URL on unmount
+  React.useEffect(() => {
+    return () => {
+      if (avatarUrl) {
+        URL.revokeObjectURL(avatarUrl);
+      }
+    };
+  }, [avatarUrl]);
 
   const handleCopy = async () => {
     try {
@@ -89,20 +201,20 @@ function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div className={cn(
-      "group relative",
+      "group relative py-4",
       message.pending && "animate-pulse"
     )}>
       <div className="max-w-7xl mx-auto px-4">
         <ChatBubble
-          variant={message.role === "user" ? "sent" : "received"}
+          variant={message.isUser ? "sent" : "received"}
           layout="default"
           className={cn(
             "max-w-[80%]",
-            message.role === "user" && "ml-auto",
+            message.isUser ? "ml-auto" : "mr-auto",
             message.error && "border-red-500/50"
           )}
         >
-          {message.role === "assistant" && (
+          {!message.isUser && (
             <ChatBubbleAvatar
               src="/images/blog-mnky-avatar.png"
               fallback="BM"
@@ -114,13 +226,26 @@ function ChatMessage({ message }: { message: Message }) {
               )}
             />
           )}
+          {message.isUser && (
+            <ChatBubbleAvatar
+              src={avatarUrl || undefined}
+              fallback={profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
+              className={cn(
+                "h-8 w-8 ring-2",
+                message.error 
+                  ? "ring-red-500/20" 
+                  : "ring-amber-500/20"
+              )}
+            />
+          )}
           <ChatBubbleMessage 
             isLoading={message.pending}
+            isStreaming={isStreaming}
             className={cn(
               "prose prose-zinc dark:prose-invert backdrop-blur-sm",
-              message.role === "user" 
-                ? "bg-amber-500/90 text-zinc-900 rounded-2xl rounded-br-sm" 
-                : "bg-zinc-800/70 text-zinc-100 rounded-2xl rounded-bl-sm",
+              message.isUser 
+                ? "bg-amber-500/90 text-zinc-900 rounded-2xl rounded-br-sm ml-2" 
+                : "bg-zinc-800/70 text-zinc-100 rounded-2xl rounded-bl-sm mr-2",
               message.error && "text-red-500"
             )}
           >
@@ -207,7 +332,7 @@ function ChatMessage({ message }: { message: Message }) {
         {/* Command Panel */}
         <div className={cn(
           "flex items-center gap-2 mt-2",
-          message.role === "user" ? "justify-end" : "justify-start ml-12"
+          message.isUser ? "justify-end" : "justify-start"
         )}>
           <Button
             variant="ghost"
@@ -218,24 +343,26 @@ function ChatMessage({ message }: { message: Message }) {
             <Copy className="h-4 w-4" />
             <span className="sr-only">Copy message</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-8 w-8 rounded-lg text-zinc-400 hover:text-amber-500 hover:bg-zinc-800/50",
-              isSpeaking && "text-amber-500 bg-zinc-800/50"
-            )}
-            onClick={handleTextToSpeech}
-          >
-            {isSpeaking ? (
-              <Speaker className="h-4 w-4 animate-pulse" />
-            ) : (
-              <Speaker className="h-4 w-4" />
-            )}
-            <span className="sr-only">
-              {isSpeaking ? "Stop speaking" : "Read aloud"}
-            </span>
-          </Button>
+          {!message.isUser && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-8 w-8 rounded-lg text-zinc-400 hover:text-amber-500 hover:bg-zinc-800/50",
+                isSpeaking && "text-amber-500 bg-zinc-800/50"
+              )}
+              onClick={handleTextToSpeech}
+            >
+              {isSpeaking ? (
+                <Speaker className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Speaker className="h-4 w-4" />
+              )}
+              <span className="sr-only">
+                {isSpeaking ? "Stop speaking" : "Read aloud"}
+              </span>
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -296,14 +423,37 @@ function WelcomeScreen({ onSubmit }: { onSubmit?: (message: string) => void }) {
 export default function MoodMnkyBlogManager() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isStreaming, setIsStreaming] = React.useState(false);
   const { toast } = useToast();
   const abortControllerRef = React.useRef<AbortController | null>(null);
+  const flowiseService = FlowiseService.getInstance();
+  const [config] = React.useState<Record<string, unknown>>({
+    temperature: 0.7,
+    maxTokens: 2000,
+    topP: 0.9,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    memoryType: 'chat',
+    messageWindow: 10
+  });
+
+  // Debug logging for state changes
+  React.useEffect(() => {
+    console.log('Streaming state changed:', isStreaming);
+  }, [isStreaming]);
+
+  React.useEffect(() => {
+    console.log('Messages updated:', messages);
+  }, [messages]);
 
   const handleFileUpload = async (file: File) => {
     try {
-      const filepath = await FlowiseAPI.uploadFile(file);
-      return filepath;
+      console.log('Uploading file:', file.name);
+      const response = await flowiseService.uploadFile(file);
+      console.log('File uploaded:', response);
+      return response.filepath;
     } catch (error) {
+      console.error('File upload error:', error);
       toast({
         title: "File Upload Error",
         description: error instanceof Error ? error.message : "Failed to upload file",
@@ -315,71 +465,142 @@ export default function MoodMnkyBlogManager() {
 
   const handleSubmit = async (content: string, files?: File[]) => {
     try {
-      console.log('Submitting message:', content);
+      console.log('Starting submission:', content);
+      
+      // Abort any ongoing stream
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      
+      setIsLoading(true);
+      setIsStreaming(true);
 
-      // Create user message
-      const userMessage: Message = {
+      // Add user message with current config
+      const userMessage = {
         id: Date.now().toString(),
-        role: "user",
         content,
+        isUser: true,
         timestamp: new Date().toISOString(),
-      };
+        config
+      } satisfies Message;
 
-      // Handle file uploads if any
       if (files?.length) {
-        setIsLoading(true);
         await Promise.all(files.map(handleFileUpload));
       }
 
-      setMessages((prev) => [...prev, userMessage]);
+      console.log('Adding user message:', userMessage);
+      setMessages(prev => {
+        console.log('Previous messages:', prev);
+        const newMessages = [...prev, userMessage];
+        console.log('New messages after adding user message:', newMessages);
+        return newMessages;
+      });
 
-      // Create assistant message placeholder
-      const assistantMessage: Message = {
+      // Add assistant message placeholder
+      const assistantMessage = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "",
+        content: '',
+        isUser: false,
         timestamp: new Date().toISOString(),
-        pending: true,
-      };
+        pending: true
+      } satisfies Message;
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(true);
+      console.log('Adding assistant placeholder with ID:', assistantMessage.id);
+      setMessages(prev => {
+        const newMessages = [...prev, assistantMessage];
+        console.log('Messages after adding placeholder:', newMessages);
+        return newMessages;
+      });
 
-      // Get chat messages history
-      const chatMessages: ChatMessage[] = [...messages, userMessage].map(({ role, content }) => ({
-        role,
-        content,
-      }));
+      // Convert messages to Flowise format
+      const convertToFlowiseMessage = (msg: Message): FlowiseMessage => ({
+        message: msg.content,
+        type: msg.isUser ? 'userMessage' : 'apiMessage'
+      });
+
+      const history = messages.map(convertToFlowiseMessage);
 
       try {
-        // Send message and get response
-        const response = await FlowiseAPI.sendChatMessage(chatMessages);
-        
-        // Update assistant message with response
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: response, pending: false }
-              : msg
-          )
-        );
-      } catch (error) {
-        console.error('Chat error:', error);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id
-              ? { 
-                  ...msg, 
-                  error: true, 
-                  pending: false, 
-                  content: error instanceof Error ? error.message : "I apologize, but I encountered an error while processing your request. Please try again." 
-                }
-              : msg
-          )
-        );
+        console.log('Creating streaming prediction with config:', config);
+        const prediction = await flowiseService.createPrediction({
+          question: content,
+          history,
+          streaming: true,
+          overrideConfig: config
+        });
 
+        for await (const chunk of prediction) {
+          console.log('Received chunk:', chunk);
+          
+          switch (chunk.event) {
+            case 'start':
+              console.log('Stream started');
+              break;
+
+            case 'token':
+              if (chunk.data) {
+                const tokenText = chunk.data;
+                if (tokenText) {
+                  setMessages(prev => {
+                    const lastMessage = prev[prev.length - 1];
+                    if (!lastMessage.pending) {
+                      return prev;
+                    }
+                    return prev.map(msg =>
+                      msg.id === lastMessage.id
+                        ? { ...msg, content: msg.content + tokenText }
+                        : msg
+                    );
+                  });
+                }
+              }
+              break;
+
+            case 'error':
+              const errorMessage = chunk.data || 'Unknown error';
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === assistantMessage.id
+                    ? { ...msg, pending: false, error: true, content: errorMessage }
+                    : msg
+                )
+              );
+              throw new Error(errorMessage);
+
+            case 'end':
+              console.log('Stream ended');
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === assistantMessage.id
+                    ? { ...msg, pending: false }
+                    : msg
+                )
+              );
+              break;
+
+            case 'metadata':
+            case 'sourceDocuments':
+            case 'usedTools':
+              console.log(`Received ${chunk.event}:`, chunk.data);
+              break;
+
+            default:
+              console.log(`Unhandled event type: ${chunk.event}`, chunk);
+          }
+        }
+      } catch (error) {
+        console.error('Prediction error:', error);
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === assistantMessage.id
+              ? { ...msg, pending: false, error: true, content: error instanceof Error ? error.message : 'Failed to get response' }
+              : msg
+          )
+        );
         toast({
-          title: "Error",
+          title: "Chat Error",
           description: error instanceof Error ? error.message : "Failed to get response",
           variant: "destructive",
         });
@@ -392,7 +613,10 @@ export default function MoodMnkyBlogManager() {
         variant: "destructive",
       });
     } finally {
+      console.log('Request completed, cleaning up...');
       setIsLoading(false);
+      setIsStreaming(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -423,7 +647,11 @@ export default function MoodMnkyBlogManager() {
         {hasMessages ? (
           <ChatMessageList>
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage 
+                key={message.id} 
+                message={message} 
+                isStreaming={isStreaming && message.id === messages[messages.length - 1].id} 
+              />
             ))}
           </ChatMessageList>
         ) : (

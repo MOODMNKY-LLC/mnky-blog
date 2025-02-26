@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export type ChatPosition = "bottom-right" | "bottom-left";
 export type ChatSize = "sm" | "md" | "lg" | "xl" | "full";
@@ -131,17 +132,13 @@ const ExpandableChatToggle: React.FC<ExpandableChatToggleProps> = ({
     onClick={toggleChat}
     className={cn(
       "w-14 h-14 rounded-full",
-      "bg-black/10 dark:bg-white/10",
-      "backdrop-blur-md backdrop-saturate-150",
-      "border border-white/20 dark:border-white/10",
-      "hover:bg-black/20 dark:hover:bg-white/20",
-      "hover:scale-105 active:scale-95",
-      "shadow-lg shadow-black/5",
+      "bg-zinc-900/80 dark:bg-zinc-900/80",
+      "backdrop-blur-sm",
+      "border border-zinc-800/50",
+      "hover:bg-zinc-800/80",
+      "hover:border-amber-500/20 hover:shadow-[0_0_8px_0_rgba(245,158,11,0.1)]",
       "transition-all duration-300 ease-in-out",
-      "group relative overflow-hidden",
-      "before:absolute before:inset-0 before:size-full",
-      "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
-      "before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-1000",
+      "group relative",
       className
     )}
     {...props}
@@ -150,7 +147,15 @@ const ExpandableChatToggle: React.FC<ExpandableChatToggleProps> = ({
       <X className="h-6 w-6 text-zinc-100/80 group-hover:text-zinc-100 transition-colors" />
     ) : (
       icon || (
-        <MessageCircle className="h-6 w-6 text-amber-500/80 group-hover:text-amber-500 transition-colors" />
+        <div className="w-8 h-8 flex items-center justify-center">
+          <Image
+            src="/flame_head_icon.svg"
+            alt="Open Chat"
+            width={32}
+            height={32}
+            className="relative z-10 text-amber-500 opacity-70 group-hover:opacity-100 transition-all duration-300 [filter:brightness(0)_saturate(100%)_invert(82%)_sepia(49%)_saturate(1000%)_hue-rotate(332deg)_brightness(101%)_contrast(101%)] group-hover:scale-110"
+          />
+        </div>
       )
     )}
   </Button>

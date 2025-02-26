@@ -13,6 +13,7 @@ import { StarIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { ChatLayout } from "./chat-layout";
 import MoodMnkyBlogManager from "../MoodMnkyBlogManager";
+import Image from "next/image";
 
 interface ChatDrawerProps {
   className?: string;
@@ -32,7 +33,13 @@ export function ChatDrawer({ className }: ChatDrawerProps) {
             className
           )}
         >
-          <StarIcon className="h-8 w-8 text-amber-500" />
+          <Image
+            src="/logo.png"
+            alt="Open Chat"
+            width={32}
+            height={32}
+            className="object-contain text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110 [filter:brightness(0)_saturate(100%)_invert(82%)_sepia(49%)_saturate(1000%)_hue-rotate(332deg)_brightness(101%)_contrast(101%)]"
+          />
           <span className="sr-only">Open Chat</span>
         </Button>
       </DrawerTrigger>

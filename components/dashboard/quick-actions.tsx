@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { ImageIcon, Pencil1Icon } from "@radix-ui/react-icons"
+import { ImageIcon, Pencil1Icon, GearIcon } from "@radix-ui/react-icons"
 import { motion, useSpring, useTransform, useMotionValue, type MotionValue } from "framer-motion"
 import { DockIcon } from "@/components/magicui/dock"
 import { ChatDrawer } from "@/components/chat/chat-drawer"
@@ -22,6 +22,9 @@ import {
 } from "@dnd-kit/core"
 import { restrictToWindowEdges } from "@dnd-kit/modifiers"
 import Image from "next/image"
+import { ChatConfigSheet } from "@/components/chat/chat-config-sheet"
+import { Bot, MessagesSquare, Mail } from "lucide-react"
+import { StarIcon } from "@radix-ui/react-icons"
 
 interface Profile {
   id: string
@@ -210,13 +213,20 @@ function DraggableDock() {
             {...attributes}
           >
             <div className="relative flex flex-col items-center gap-2">
-              <Image
-                src="/flame_head_icon.svg"
-                alt="MOOD MNKY Logo"
-                width={24}
-                height={28}
-                className="relative z-10 text-amber-500 opacity-70 group-hover:opacity-100 transition-all duration-300 [filter:brightness(0)_saturate(100%)_invert(82%)_sepia(49%)_saturate(1000%)_hue-rotate(332deg)_brightness(101%)_contrast(101%)] group-hover:scale-110"
-              />
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="relative z-10 text-amber-500 opacity-70 group-hover:opacity-100 transition-all duration-300"
+              >
+                <circle cx="6" cy="8" r="2" fill="currentColor" />
+                <circle cx="6" cy="16" r="2" fill="currentColor" />
+                <circle cx="12" cy="8" r="2" fill="currentColor" />
+                <circle cx="12" cy="16" r="2" fill="currentColor" />
+                <circle cx="18" cy="8" r="2" fill="currentColor" />
+                <circle cx="18" cy="16" r="2" fill="currentColor" />
+              </svg>
               <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent group-hover:via-amber-500/50 transition-colors duration-300" />
             </div>
           </div>
@@ -257,11 +267,31 @@ function DraggableDock() {
                     <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md" />
                     <div className="absolute inset-[-2px] rounded-full bg-gradient-to-b from-amber-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
-                    <ImageIcon className="h-8 w-8 text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110" />
+                    <Mail className="h-8 w-8 text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-zinc-900/90 border-zinc-800/50 text-amber-500/90">
-                  <p>Browse & Upload Media</p>
+                  <p>Inbox</p>
+                </TooltipContent>
+              </Tooltip>
+            </VerticalDockIcon>
+            <VerticalDockIcon mouseY={mouseY}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="group h-full w-full rounded-full flex items-center justify-center relative transition-all duration-300 hover:bg-amber-500/5"
+                  >
+                    <div className="absolute inset-0 rounded-full bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md" />
+                    <div className="absolute inset-[-2px] rounded-full bg-gradient-to-b from-amber-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                    <MessagesSquare className="h-8 w-8 text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-zinc-900/90 border-zinc-800/50 text-amber-500/90">
+                  <p>Messages</p>
                 </TooltipContent>
               </Tooltip>
             </VerticalDockIcon>
@@ -271,6 +301,26 @@ function DraggableDock() {
                 <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
                 <ChatDrawer className="h-full w-full flex items-center justify-center relative z-10" />
               </div>
+            </VerticalDockIcon>
+            <VerticalDockIcon mouseY={mouseY}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="group h-full w-full rounded-full flex items-center justify-center relative transition-all duration-300 hover:bg-amber-500/5">
+                    <div className="absolute inset-0 rounded-full bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md" />
+                    <div className="absolute inset-[-2px] rounded-full bg-gradient-to-b from-amber-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-[-3px] rounded-full bg-gradient-to-b from-amber-500/20 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                    <ChatConfigSheet>
+                      <div className="h-full w-full rounded-full flex items-center justify-center relative z-10">
+                        <GearIcon className="h-8 w-8 text-amber-500 relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-90" />
+                      </div>
+                    </ChatConfigSheet>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-zinc-900/90 border-zinc-800/50 text-amber-500/90">
+                  <p>Configure Chat Assistant</p>
+                </TooltipContent>
+              </Tooltip>
             </VerticalDockIcon>
             <VerticalDockIcon mouseY={mouseY}>
               <Tooltip>
