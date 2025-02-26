@@ -17,7 +17,7 @@ export default async function Home() {
   const recentPosts = posts.slice(1, 7);
 
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="page-root">
       {/* Hero Section */}
       <section className="relative overflow-hidden -mt-12">
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -207,7 +207,7 @@ export default async function DashboardPage() {
         {/* Hero Section with Profile */}
         <div className="grid gap-6 md:grid-cols-[1fr_300px] mb-12">
           {/* Welcome Card */}
-          <Card className="border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50 backdrop-blur-md">
+          <Card className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50">
             <CardContent className="p-8">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-4">
@@ -221,16 +221,16 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2 text-sm text-zinc-400 glass-card px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-2 text-sm text-zinc-400 backdrop-blur-md bg-zinc-900/50 border border-zinc-800/50 px-3 py-1.5 rounded-full">
                       <DrawingPinIcon className="h-4 w-4 text-amber-500" />
                       {activityCounts.notes} Note{activityCounts.notes !== 1 && 's'}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-zinc-400 glass-card px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-2 text-sm text-zinc-400 backdrop-blur-md bg-zinc-900/50 border border-zinc-800/50 px-3 py-1.5 rounded-full">
                       <ChatBubbleIcon className="h-4 w-4 text-amber-500" />
                       {activityCounts.replies} Repl{activityCounts.replies !== 1 ? 'ies' : 'y'}
                     </div>
                     {activityCounts.unreadMessages > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-zinc-400 glass-card px-3 py-1.5 rounded-full">
+                      <div className="flex items-center gap-2 text-sm text-zinc-400 backdrop-blur-md bg-zinc-900/50 border border-zinc-800/50 px-3 py-1.5 rounded-full">
                         <EnvelopeClosedIcon className="h-4 w-4 text-amber-500" />
                         {activityCounts.unreadMessages} Unread Message{activityCounts.unreadMessages !== 1 && 's'}
                       </div>
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500 backdrop-blur-md"
+                    className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     Calendar
@@ -255,7 +255,7 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Profile Card */}
-          <Card className="border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50 backdrop-blur-md">
+          <Card className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <ProfileAvatar 
@@ -307,7 +307,7 @@ export default async function DashboardPage() {
         {/* Activity Cards Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
           {activityCards.map((card, index) => (
-            <Card key={index} className="group border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50 hover:shadow-lg transition-all backdrop-blur-md">
+            <Card key={index} className="group border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 hover:shadow-lg transition-all">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   {card.icon}
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-semibold text-gradient-gold">Profile & Settings</h2>
             <Button 
               variant="outline" 
-              className="border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500 backdrop-blur-md"
+              className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500"
             >
               <GearIcon className="mr-2 h-4 w-4" />
               Manage All Settings
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             {profileCards.map((card, index) => (
-              <Card key={index} className="group border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50 hover:shadow-lg transition-all backdrop-blur-md">
+              <Card key={index} className="group border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 hover:shadow-lg transition-all">
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
                     {card.icon}
@@ -397,12 +397,12 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-semibold text-gradient-gold">Recent Activity</h2>
             <Button 
               variant="outline" 
-              className="border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500 backdrop-blur-md"
+              className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 hover:bg-zinc-800/50 hover:text-amber-500"
             >
               View All Activity
             </Button>
           </div>
-          <Card className="border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-zinc-950/50 backdrop-blur-md divide-y divide-zinc-800/50">
+          <Card className="border-zinc-800/50 backdrop-blur-md bg-zinc-900/50 divide-y divide-zinc-800/50">
             <CardContent className="p-0">
               <div className="p-4 flex items-center gap-4">
                 <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center">

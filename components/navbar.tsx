@@ -287,8 +287,8 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
   }, [user?.avatarUrl, supabase])
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
-      <nav className="relative flex items-center justify-between w-full max-w-7xl px-6 py-3 rounded-full glass">
+    <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 pointer-events-none">
+      <nav className="relative flex items-center justify-between w-full max-w-7xl px-6 py-3 rounded-full glass pointer-events-auto">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1.5">
           <span className="text-xl font-bold tracking-wider text-gradient-gold">

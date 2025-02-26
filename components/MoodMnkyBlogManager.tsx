@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Speaker } from "lucide-react";
 import { FlowiseService, type IMessage as FlowiseIMessage, type MessageType, type FlowiseStreamResponse } from '@/lib/flowise/client';
 import { createBrowserClient } from '@supabase/ssr';
+import { useChatStore, type ChatSession } from "@/lib/stores/chat-store";
 
 // Message types
 interface Message {
@@ -421,7 +422,25 @@ function WelcomeScreen({ onSubmit }: { onSubmit?: (message: string) => void }) {
 }
 
 export default function MoodMnkyBlogManager() {
-  const [messages, setMessages] = React.useState<Message[]>([]);
+  const {
+    sessions,
+    currentSessionId,
+    createSession,
+    addMessage,
+    updateMessage,
+    deleteSession,
+  } = useChatStore();
+
+  // Ensure we have a session
+  React.useEffect(() => {
+    if (!currentSessionId && sessions.length === 0) {
+      createSession();
+    }
+  }, [currentSessionId, sessions.length, createSession]);
+
+  const currentSession = sessions.find((s: ChatSession) => s.id === currentSessionId);
+  const messages = currentSession?.messages || [];
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const { toast } = useToast();
@@ -464,6 +483,19 @@ export default function MoodMnkyBlogManager() {
   };
 
   const handleSubmit = async (content: string, files?: File[]) => {
+    // Create a session if none exists
+    if (!currentSessionId) {
+      const newSessionId = createSession();
+      if (!newSessionId) {
+        toast({
+          title: "Error",
+          description: "Failed to create chat session",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       console.log('Starting submission:', content);
       
@@ -491,12 +523,7 @@ export default function MoodMnkyBlogManager() {
       }
 
       console.log('Adding user message:', userMessage);
-      setMessages(prev => {
-        console.log('Previous messages:', prev);
-        const newMessages = [...prev, userMessage];
-        console.log('New messages after adding user message:', newMessages);
-        return newMessages;
-      });
+      addMessage(currentSessionId!, userMessage);
 
       // Add assistant message placeholder
       const assistantMessage = {
@@ -508,11 +535,7 @@ export default function MoodMnkyBlogManager() {
       } satisfies Message;
 
       console.log('Adding assistant placeholder with ID:', assistantMessage.id);
-      setMessages(prev => {
-        const newMessages = [...prev, assistantMessage];
-        console.log('Messages after adding placeholder:', newMessages);
-        return newMessages;
-      });
+      addMessage(currentSessionId!, assistantMessage);
 
       // Convert messages to Flowise format
       const convertToFlowiseMessage = (msg: Message): FlowiseMessage => ({
@@ -531,6 +554,8 @@ export default function MoodMnkyBlogManager() {
           overrideConfig: config
         });
 
+        let accumulatedContent = '';
+
         for await (const chunk of prediction) {
           console.log('Received chunk:', chunk);
           
@@ -541,18 +566,11 @@ export default function MoodMnkyBlogManager() {
 
             case 'token':
               if (chunk.data) {
-                const tokenText = chunk.data;
+                const tokenText = chunk.data as string;
                 if (tokenText) {
-                  setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (!lastMessage.pending) {
-                      return prev;
-                    }
-                    return prev.map(msg =>
-                      msg.id === lastMessage.id
-                        ? { ...msg, content: msg.content + tokenText }
-                        : msg
-                    );
+                  accumulatedContent += tokenText;
+                  updateMessage(currentSessionId!, assistantMessage.id, {
+                    content: accumulatedContent
                   });
                 }
               }
@@ -560,24 +578,19 @@ export default function MoodMnkyBlogManager() {
 
             case 'error':
               const errorMessage = chunk.data || 'Unknown error';
-              setMessages(prev =>
-                prev.map(msg =>
-                  msg.id === assistantMessage.id
-                    ? { ...msg, pending: false, error: true, content: errorMessage }
-                    : msg
-                )
-              );
-              throw new Error(errorMessage);
+              updateMessage(currentSessionId!, assistantMessage.id, {
+                pending: false,
+                error: true,
+                content: errorMessage as string
+              });
+              throw new Error(errorMessage as string);
 
             case 'end':
               console.log('Stream ended');
-              setMessages(prev =>
-                prev.map(msg =>
-                  msg.id === assistantMessage.id
-                    ? { ...msg, pending: false }
-                    : msg
-                )
-              );
+              updateMessage(currentSessionId!, assistantMessage.id, {
+                pending: false,
+                content: accumulatedContent
+              });
               break;
 
             case 'metadata':
@@ -592,13 +605,11 @@ export default function MoodMnkyBlogManager() {
         }
       } catch (error) {
         console.error('Prediction error:', error);
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, pending: false, error: true, content: error instanceof Error ? error.message : 'Failed to get response' }
-              : msg
-          )
-        );
+        updateMessage(currentSessionId!, assistantMessage.id, {
+          pending: false,
+          error: true,
+          content: error instanceof Error ? error.message : 'Failed to get response'
+        });
         toast({
           title: "Chat Error",
           description: error instanceof Error ? error.message : "Failed to get response",
@@ -630,6 +641,13 @@ export default function MoodMnkyBlogManager() {
     };
   }, []);
 
+  const handleRefresh = React.useCallback(() => {
+    if (currentSessionId) {
+      deleteSession(currentSessionId);
+    }
+    createSession();
+  }, [currentSessionId, deleteSession, createSession]);
+
   const hasMessages = messages.length > 0;
 
   return (
@@ -642,8 +660,35 @@ export default function MoodMnkyBlogManager() {
         )} />
       </div>
 
-      {/* Chat Area */}
+      {/* Chat Area with Refresh Button */}
       <div className="flex-1 min-h-0 relative z-10">
+        {hasMessages && (
+          <div className="absolute top-2 right-4 z-20">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              className="h-8 w-8 rounded-lg text-zinc-400 hover:text-amber-500 hover:bg-zinc-800/50 transition-all duration-200"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+              <span className="sr-only">New Chat</span>
+            </Button>
+          </div>
+        )}
         {hasMessages ? (
           <ChatMessageList>
             {messages.map((message) => (

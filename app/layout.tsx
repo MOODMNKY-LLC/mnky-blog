@@ -7,6 +7,7 @@ import { NavWrapper } from "@/components/nav-wrapper";
 import { Footer } from "@/components/footer";
 import { ChatProvider } from "@/components/providers/chat-provider";
 import { cn } from "@/lib/utils";
+import { FeatureNavigationProvider } from "@/lib/contexts/feature-navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,14 +24,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className, 'min-h-screen bg-background flex flex-col')}>
-        <ThemeProvider defaultTheme="dark" storageKey="mood-mnky-theme">
-          <NavWrapper />
-          <main className="pt-24 flex-1">
-            {children}
-          </main>
-          <Footer />
-          <ChatProvider />
-          <Toaster />
+        <ThemeProvider
+          defaultTheme="dark"
+          storageKey="mood-mnky-theme"
+        >
+          <FeatureNavigationProvider>
+            <NavWrapper />
+            <main className="pt-24 flex-1">
+              {children}
+            </main>
+            <div className="hidden [.page-root_&]:block">
+              <Footer />
+            </div>
+            <ChatProvider />
+            <Toaster />
+          </FeatureNavigationProvider>
         </ThemeProvider>
       </body>
     </html>
