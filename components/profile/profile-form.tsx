@@ -70,7 +70,7 @@ interface Profile {
   expertise: string[] | null
   mood_status: string | null
   availability_status: string | null
-  role: 'user' | 'admin' | 'moderator' | 'author' | 'editor'
+  role: 'user' | 'moderator' | 'admin' | 'author' | 'editor' | 'ADMIN' | 'MODERATOR' | 'USER'
   preferences: {
     theme: {
       mode: 'dark' | 'light'
@@ -124,7 +124,10 @@ export function ProfileForm({ user, onClose, section = 'basic' }: ProfileFormPro
 
   const getProfile = useCallback(async () => {
     try {
-      if (!user?.id) return
+      if (!user?.id) {
+        setLoading(false)
+        return
+      }
 
       const { data, error, status } = await supabase
         .from('profiles')
@@ -158,8 +161,32 @@ export function ProfileForm({ user, onClose, section = 'basic' }: ProfileFormPro
         .eq('id', user.id)
         .single()
 
-      if (error && status !== 406) {
-        throw error
+      if (error) {
+        if (status !== 406) {
+          throw error
+        }
+        // Handle 406 (Not Acceptable) - typically means no profile exists yet
+        setProfile(null)
+        form.reset({
+          username: null,
+          full_name: null,
+          display_name: null,
+          avatar_url: null,
+          website: null,
+          bio: null,
+          author_bio: null,
+          pronouns: null,
+          timezone: null,
+          locale: null,
+          location: null,
+          occupation: null,
+          interests: null,
+          expertise: null,
+          mood_status: null,
+          availability_status: null,
+          preferences: null,
+        })
+        return
       }
 
       if (data) {
@@ -222,7 +249,10 @@ export function ProfileForm({ user, onClose, section = 'basic' }: ProfileFormPro
       })
 
       router.refresh()
-      onClose?.()
+      // Only close if it's an avatar update or explicit save
+      if (values.avatar_url || Object.keys(values).length > 1) {
+        onClose?.()
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       console.error('Error updating profile:', errorMessage)
@@ -583,7 +613,7 @@ export function ProfileForm({ user, onClose, section = 'basic' }: ProfileFormPro
     )
   }
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Icons.spinner className="h-6 w-6 animate-spin text-zinc-500" />
@@ -596,15 +626,35 @@ export function ProfileForm({ user, onClose, section = 'basic' }: ProfileFormPro
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {section === 'basic' && (
           <>
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-2">
               <Avatar
-                uid={user?.id ?? null}
-                url={profile?.avatar_url}
+                uid={user.id}
+                url={profile?.avatar_url || null}
                 size={150}
                 onUpload={(url) => {
                   updateProfile({ avatar_url: url })
                 }}
               />
+              {(profile?.role === 'admin' || profile?.role === 'ADMIN') && (
+                <span className="inline-flex items-center rounded-md bg-amber-400/10 px-2 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-400/20">
+                  Admin
+                </span>
+              )}
+              {(profile?.role === 'moderator' || profile?.role === 'MODERATOR') && (
+                <span className="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/20">
+                  Moderator
+                </span>
+              )}
+              {profile?.role === 'author' && (
+                <span className="inline-flex items-center rounded-md bg-green-400/10 px-2 py-1 text-xs font-medium text-green-400 ring-1 ring-inset ring-green-400/20">
+                  Author
+                </span>
+              )}
+              {profile?.role === 'editor' && (
+                <span className="inline-flex items-center rounded-md bg-purple-400/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-400/20">
+                  Editor
+                </span>
+              )}
             </div>
             {renderBasicFields()}
           </>

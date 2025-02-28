@@ -18,6 +18,7 @@ import { DiscussionsRightSidebar } from '../discussions/DiscussionsRightSidebar'
 import { ForumRightSidebar } from '../forum/ForumRightSidebar';
 import { MembersRightSidebar } from '../members/MembersRightSidebar';
 import { EventsRightSidebar } from '../events/EventsRightSidebar';
+import { ChatInput } from '../chat/ChatInput';
 
 interface CommunityLayoutProps {
   children: React.ReactNode;
@@ -132,10 +133,20 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
           {/* Main Content */}
           <main className="flex-1 min-w-0">
             <div className="h-full rounded-lg bg-gradient-to-b from-zinc-900/50 via-zinc-900/25 to-zinc-900/50 backdrop-blur-md border border-zinc-800/50 shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] overflow-hidden">
-              <div className="h-full overflow-y-auto">
-                <div className="min-h-[calc(100vh-6rem)] p-8 pt-32">
-                  {children}
+              <div className="flex flex-col h-full">
+                <div className="flex-1 overflow-y-auto">
+                  <div className="min-h-[calc(100vh-6rem)] p-8 pt-32">
+                    {children}
+                  </div>
                 </div>
+                {/* Floating Chat Input */}
+                {currentSection !== 'home' && (
+                  <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8 bg-gradient-to-t from-zinc-950 to-transparent">
+                    <div className="max-w-3xl mx-auto">
+                      <ChatInput section={currentSection} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </main>

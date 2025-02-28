@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/utils/supabase/server"
 import { QuoteCarousel } from '@/components/community/quotes/QuoteCarousel'
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { AnimatedList } from "@/components/magicui/animated-list"
 
 async function getCommunityStats() {
   const supabase = await createClient()
@@ -352,8 +353,8 @@ export default async function CommunityPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4 flex-1">
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+                    <AnimatedList delay={2000} className="space-y-3">
+                      <div key="workshop" className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
                         <PartyPopper className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-1" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-4">
@@ -364,7 +365,7 @@ export default async function CommunityPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+                      <div key="discussion" className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
                         <MessageSquare className="h-4 w-4 text-blue-500 flex-shrink-0 mt-1" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-4">
@@ -375,7 +376,7 @@ export default async function CommunityPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+                      <div key="blog" className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
                         <Star className="h-4 w-4 text-amber-500 flex-shrink-0 mt-1" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-4">
@@ -385,7 +386,7 @@ export default async function CommunityPage() {
                           <p className="text-xs text-zinc-400 mt-0.5">Getting Started with Next.js</p>
                         </div>
                       </div>
-                    </div>
+                    </AnimatedList>
                   </CardContent>
                 </Card>
               </div>
