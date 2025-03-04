@@ -6,6 +6,7 @@ import Image from "next/image";
 interface Avatar {
   imageUrl: string;
   profileUrl?: string;
+  availability?: 'online' | 'away' | 'dnd' | 'offline' | 'invisible';
 }
 
 interface AvatarCirclesProps {
@@ -29,17 +30,33 @@ export const AvatarCircles = ({
   if (avatars.length === 1 && !numPeople) {
     const avatar = avatars[0];
     const content = (
-      <Image
-        className={cn(
-          "rounded-full border-2 border-amber-500/20 object-cover ring-1 ring-amber-500/20",
-          onClick && "cursor-pointer hover:border-amber-500/30 hover:ring-amber-500/30"
+      <div className="relative">
+        <Image
+          className={cn(
+            "rounded-full border-2 border-amber-500/20 object-cover ring-1 ring-amber-500/20",
+            onClick && "cursor-pointer hover:border-amber-500/30 hover:ring-amber-500/30"
+          )}
+          src={avatar.imageUrl}
+          width={size}
+          height={size}
+          alt="Avatar"
+          style={{ width: size, height: size }}
+        />
+        {avatar.availability && (
+          <span 
+            className={cn(
+              "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-zinc-900",
+              {
+                'bg-emerald-500': avatar.availability === 'online',
+                'bg-amber-500': avatar.availability === 'away',
+                'bg-red-500': avatar.availability === 'dnd',
+                'bg-zinc-500': avatar.availability === 'offline' || avatar.availability === 'invisible'
+              },
+              "transition-colors duration-300"
+            )}
+          />
         )}
-        src={avatar.imageUrl}
-        width={size}
-        height={size}
-        alt="Avatar"
-        style={{ width: size, height: size }}
-      />
+      </div>
     );
 
     if (showLink && avatar.profileUrl) {

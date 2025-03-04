@@ -158,7 +158,6 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
   };
 
   return (
-    // Remove the top-24 positioning and make it take full viewport
     <div className="fixed inset-0 bg-zinc-950">
       <div className="relative flex h-full gap-2 p-2">
         {/* Feature Navigation Rail */}
@@ -169,7 +168,7 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
         </div>
 
         {/* Main Layout Grid */}
-        <div className="flex flex-1 gap-2 min-w-0">
+        <div className="flex flex-1 gap-2 min-w-0 overflow-hidden">
           {/* Left Sidebar Area */}
           <div className="relative flex h-full">
             {/* Toggle Button */}
@@ -249,9 +248,9 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
           </main>
 
           {/* Right Sidebar Area */}
-          <div className="relative flex h-full">
-            {/* Toggle Button */}
-            {showRightSidebar && (
+          {showRightSidebar && (
+            <div className="relative flex h-full shrink-0">
+              {/* Toggle Button */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -271,10 +270,8 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
                   />
                 </div>
               </Button>
-            )}
 
-            {/* Sidebar Content */}
-            {showRightSidebar && (
+              {/* Sidebar Content */}
               <div
                 className={cn(
                   "h-full rounded-lg bg-gradient-to-b from-zinc-900/50 via-zinc-900/25 to-zinc-900/50 backdrop-blur-md border border-zinc-800/50 shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] transition-[width] duration-300 overflow-hidden",
@@ -285,8 +282,8 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
                   {getRightSidebarContent()}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
