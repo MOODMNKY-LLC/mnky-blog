@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MessageSquare, Users, Bot, Sparkles, Settings, Activity, Plus, Home, Hash, Megaphone } from 'lucide-react';
+import { MessageSquare, Users, Bot, Sparkles, Settings, Activity, Plus, Home, Hash, Megaphone, Inbox, Bell, MessageCircle, ThumbsUp, GitBranch, Rocket, Music, Palette, Brain, Heart, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseSidebar, type SidebarSection } from '../shared/BaseSidebar';
 import { Badge } from '@/components/ui/badge';
@@ -15,14 +15,16 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   
-  // Get the current slug from the URL
-  const currentSlug = pathname === '/community/chat' ? 'home' : pathname.split('/').pop();
+  // Get the current section and channel from the URL
+  const pathParts = pathname.split('/').filter(Boolean);
+  const currentSection = pathParts[1] || 'chat';
+  const currentChannel = pathParts[2] || 'home';
 
-  const handleChannelSelect = (slug: string) => {
-    if (slug === 'home') {
-      router.push('/community/chat');
+  const handleChannelSelect = (section: string, channel: string) => {
+    if (channel === 'home') {
+      router.push(`/community/${section}`);
     } else {
-      router.push(`/community/chat/${slug}`);
+      router.push(`/community/${section}/${channel}`);
     }
   };
 
@@ -33,19 +35,19 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
       items: [
         {
           id: 'home',
-          name: 'Announcements',
+          name: 'Community Updates',
           icon: <Home className="h-4 w-4" />,
           badge: { type: 'new', text: 'Welcome' }
         }
       ]
     },
     {
-      id: 'channels',
-      name: 'Channels',
+      id: 'spaces',
+      name: 'Community Spaces',
       items: [
         {
           id: 'general',
-          name: 'General',
+          name: 'General Discussion',
           icon: <Hash className="h-4 w-4" />,
           count: 24
         },
@@ -58,38 +60,56 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
       ]
     },
     {
-      id: 'direct',
-      name: 'Direct Messages',
+      id: 'inbox',
+      name: 'Your Activity',
       items: [
         {
-          id: 'ai-assistant',
-          name: 'AI Assistant',
-          icon: <Bot className="h-4 w-4" />,
-          badge: { type: 'live' }
+          id: 'messages',
+          name: 'Direct Messages',
+          icon: <Inbox className="h-4 w-4" />,
+          badge: { type: 'new', text: '3' }
         },
         {
-          id: 'community-team',
-          name: 'Community Team',
-          icon: <Users className="h-4 w-4" />,
-          badge: { type: 'new', text: 'Team' }
+          id: 'notifications',
+          name: 'Notifications',
+          icon: <Bell className="h-4 w-4" />,
+          badge: { type: 'live', text: '5' }
+        },
+        {
+          id: 'reactions',
+          name: 'Post Reactions',
+          icon: <Heart className="h-4 w-4" />,
+          count: 8
+        },
+        {
+          id: 'replies',
+          name: 'Post Replies',
+          icon: <MessageCircle className="h-4 w-4" />,
+          count: 12
         }
       ]
     },
     {
       id: 'features',
-      name: 'Feature Discussions',
+      name: 'Explore & Learn',
       items: [
         {
-          id: 'ai-chat',
-          name: 'AI Chat',
-          icon: <Sparkles className="h-4 w-4" />,
-          badge: { type: 'live', text: 'Active' }
+          id: 'upcoming',
+          name: 'New Features',
+          icon: <Lightbulb className="h-4 w-4" />,
+          badge: { type: 'new', text: '2' }
         },
         {
-          id: 'voice-chat',
-          name: 'Voice Chat',
-          icon: <MessageSquare className="h-4 w-4" />,
-          badge: { type: 'new', text: 'Beta' }
+          id: 'roadmap',
+          name: 'Product Updates',
+          icon: <GitBranch className="h-4 w-4" />,
+          badge: { type: 'updated' }
+        },
+        {
+          id: 'ai-features',
+          name: 'AI Assistant',
+          icon: <Brain className="h-4 w-4" />,
+          badge: { type: 'live', text: 'Active' }
         }
       ]
     }
@@ -108,13 +128,13 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
     <BaseSidebar
       isCollapsed={isCollapsed}
       sections={sections}
-      selectedItemId={currentSlug}
-      onItemSelect={handleChannelSelect}
+      selectedItemId={currentChannel}
+      onItemSelect={(channel) => handleChannelSelect(currentSection, channel)}
       headerContent={
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-amber-500" />
           {!isCollapsed && (
-            <span className="font-semibold text-zinc-100">Chat</span>
+            <span className="font-semibold text-zinc-100">Community Chat</span>
           )}
         </div>
       }
@@ -123,8 +143,8 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
           {!isCollapsed && (
             <>
               <div className="px-2">
-                <div className="text-xs font-medium text-zinc-100">Chat Settings</div>
-                <div className="text-xs text-zinc-400">Customize your chat experience</div>
+                <div className="text-xs font-medium text-zinc-100">Chat Preferences</div>
+                <div className="text-xs text-zinc-400">Customize your experience</div>
               </div>
               <Separator className="bg-zinc-800/50" />
             </>
@@ -142,7 +162,7 @@ export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
             )}
           >
             <Settings className="h-4 w-4" />
-            {!isCollapsed && <span>Configure Chat</span>}
+            {!isCollapsed && <span>Chat Settings</span>}
           </Button>
         </div>
       }
