@@ -207,36 +207,30 @@ function ChatMessage({ message, isStreaming }: { message: Message; isStreaming: 
     )}>
       <div className="max-w-7xl mx-auto px-4">
         <ChatBubble
+          message={message}
           variant={message.isUser ? "sent" : "received"}
           layout="default"
           className={cn(
-            "max-w-[80%]",
-            message.isUser ? "ml-auto" : "mr-auto",
-            message.error && "border-red-500/50"
+            "flex flex-col gap-2 p-4",
+            message.isUser ? "items-end" : "items-start"
           )}
         >
           {!message.isUser && (
             <ChatBubbleAvatar
-              src="/images/blog-mnky-avatar.png"
-              fallback="BM"
-              className={cn(
-                "h-8 w-8 ring-2",
-                message.error 
-                  ? "ring-red-500/20" 
-                  : "ring-amber-500/20"
-              )}
+              profile={{
+                full_name: 'Blog MNKY',
+                avatar_url: '/images/blog-mnky-avatar.png',
+                username: 'blog-mnky'
+              }}
             />
           )}
           {message.isUser && (
             <ChatBubbleAvatar
-              src={avatarUrl || undefined}
-              fallback={profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
-              className={cn(
-                "h-8 w-8 ring-2",
-                message.error 
-                  ? "ring-red-500/20" 
-                  : "ring-amber-500/20"
-              )}
+              profile={{
+                full_name: profile?.full_name || profile?.username || 'User',
+                avatar_url: avatarUrl,
+                username: profile?.username || 'user'
+              }}
             />
           )}
           <ChatBubbleMessage 

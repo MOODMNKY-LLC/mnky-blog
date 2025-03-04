@@ -65,6 +65,15 @@ begin
     now()
   );
 
+  -- Insert into user_roles table
+  insert into public.user_roles (
+    user_id,
+    role
+  ) values (
+    new.id,
+    new_role
+  );
+
   -- If this is the first user (admin), create default channels
   if user_count = 0 then
     -- Create General channel
@@ -118,6 +127,19 @@ exception
   when others then
     raise log 'Error in handle_new_user: %', SQLERRM;
     return new;
+end;
+$$;
+
+-- Create handle_updated_at function if it doesn't exist
+create or replace function public.handle_updated_at()
+returns trigger
+security definer
+set search_path = public
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc'::text, now());
+  return new;
 end;
 $$;
 

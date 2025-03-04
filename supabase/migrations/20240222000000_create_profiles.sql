@@ -1,37 +1,45 @@
 -- Create custom types for permissions and roles
-create type app_permission as enum (
-  'forums.create',
-  'forums.moderate',
-  'forums.delete',
-  'posts.create',
-  'posts.moderate',
-  'posts.delete',
-  'comments.create',
-  'comments.moderate',
-  'comments.delete',
-  'chat.create',
-  'chat.moderate',
-  'chat.delete',
-  'blog.create',
-  'blog.publish',
-  'blog.moderate',
-  'blog.delete',
-  'blog.draft',
-  'blog.comment',
-  'ai.customize',
-  'ai.train',
-  'ai.share_templates',
-  'ai.advanced_features',
-  'ai.analytics'
-);
+do $$ begin
+  create type app_permission as enum (
+    'forums.create',
+    'forums.moderate',
+    'forums.delete',
+    'posts.create',
+    'posts.moderate',
+    'posts.delete',
+    'comments.create',
+    'comments.moderate',
+    'comments.delete',
+    'chat.create',
+    'chat.moderate',
+    'chat.delete',
+    'blog.create',
+    'blog.publish',
+    'blog.moderate',
+    'blog.delete',
+    'blog.draft',
+    'blog.comment',
+    'ai.customize',
+    'ai.train',
+    'ai.share_templates',
+    'ai.advanced_features',
+    'ai.analytics'
+  );
+exception
+  when duplicate_object then null;
+end $$;
 
-create type app_role as enum (
-  'user',
-  'moderator',
-  'admin',
-  'author',
-  'editor'
-);
+do $$ begin
+  create type app_role as enum (
+    'user',
+    'moderator',
+    'admin',
+    'author',
+    'editor'
+  );
+exception
+  when duplicate_object then null;
+end $$;
 
 -- Create a table for public profiles
 create table profiles (
@@ -186,20 +194,32 @@ insert into role_permissions (role, permission) values
   ('user', 'ai.customize');
 
 -- Update the handle_new_user function to be more resilient
-create or replace function handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger
-security definer set search_path = ''
+security definer
+set search_path = public
 language plpgsql
 as $$
 declare
-  default_avatar text := 'default-avatar.png';
+  user_count int;
+  new_role text;
 begin
+  -- Count existing users to determine if this is the first user
+  select count(*) into user_count from public.profiles;
+  
+  -- Set role based on user count
+  new_role := case 
+    when user_count = 0 then 'admin'
+    else 'user'
+  end;
+
   insert into public.profiles (
     id,
     email,
     username,
     avatar_url,
     full_name,
+    role,
     created_at,
     updated_at
   ) values (
@@ -209,26 +229,25 @@ begin
       new.raw_user_meta_data->>'username',
       'user_' || substr(new.id::text, 1, 8)
     ),
-    coalesce(
-      new.raw_user_meta_data->>'avatar_url',
-      'https://api.dicebear.com/7.x/pixel-art/png?seed=' || new.id::text
-    ),
+    'https://api.dicebear.com/7.x/pixel-art/png?seed=' || new.id::text,
     coalesce(
       new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name',
       new.email::text
     ),
+    new_role::app_role,
     now(),
     now()
   );
   
-  -- Insert default user role
+  -- Insert user role
   insert into public.user_roles (user_id, role)
-  values (new.id, 'user');
+  values (new.id, new_role::app_role);
   
   return new;
 exception
   when others then
-    -- Log error details to a logging table if needed
+    raise log 'Error in handle_new_user: %', SQLERRM;
     return new;
 end;
 $$;

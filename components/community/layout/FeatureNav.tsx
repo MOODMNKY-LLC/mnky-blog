@@ -14,6 +14,7 @@ import {
   Check,
   User,
   Home,
+  Map,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -36,6 +37,7 @@ import {
 import { ProfileSheet } from '@/components/profile/profile-sheet';
 import { type User as AuthUser } from '@supabase/supabase-js';
 import { AvatarCircles } from '@/components/avatar-circles';
+import { Switch } from '@/components/ui/switch';
 
 interface FeatureItem {
   id: FeatureSection;
@@ -111,6 +113,7 @@ function UserAvatar() {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [profile, setProfile] = React.useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [isNavbarVisible, setIsNavbarVisible] = React.useState(true);
   const supabase = createClient();
 
   const availabilityStatuses = [
@@ -198,10 +201,25 @@ function UserAvatar() {
       glow: 'hover:shadow-[0_0_12px_0_rgba(245,158,11,0.2)]',
       dot: 'bg-zinc-500'
     }
+  } as const;
+
+  const defaultStyle = {
+    ring: 'border-zinc-800/50',
+    glow: 'hover:shadow-[0_0_12px_0_rgba(245,158,11,0.2)]',
+    dot: 'bg-zinc-500'
   };
 
   const currentStatus = profile?.availability_status || 'OFFLINE';
-  const currentStyle = statusStyles[currentStatus];
+  const currentStyle = statusStyles[currentStatus] || defaultStyle;
+
+  // Function to toggle navbar visibility
+  const toggleNavbar = () => {
+    setIsNavbarVisible(!isNavbarVisible);
+    // Dispatch a custom event that the navbar can listen to
+    window.dispatchEvent(new CustomEvent('toggle-navbar', { 
+      detail: { isVisible: !isNavbarVisible } 
+    }));
+  };
 
   return (
     <>
@@ -251,13 +269,27 @@ function UserAvatar() {
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 bg-zinc-900/90 border-zinc-800/50 backdrop-blur-sm">
+        <DropdownMenuContent className={cn(
+          "w-56",
+          "bg-zinc-900/50 dark:bg-zinc-900/50",
+          "backdrop-blur-sm",
+          "border border-zinc-800/50",
+          "shadow-lg",
+          "animate-in fade-in-0 zoom-in-95"
+        )}>
           <DropdownMenuGroup>
             {availabilityStatuses.map((status) => (
               <DropdownMenuItem
                 key={status.value}
                 onClick={() => updateAvailabilityStatus(status.value as Profile['availability_status'])}
-                className="flex items-center gap-2 cursor-pointer"
+                className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  "px-3 py-2.5",
+                  "text-sm font-medium text-zinc-400",
+                  "transition-colors duration-200",
+                  "focus:bg-zinc-800/50 focus:text-zinc-100",
+                  "hover:bg-zinc-800/50 hover:text-zinc-100"
+                )}
               >
                 {status.icon}
                 <span>{status.label}</span>
@@ -267,14 +299,45 @@ function UserAvatar() {
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="bg-zinc-800/50 my-1" />
           <DropdownMenuGroup>
             <ProfileSheet user={user}>
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="h-4 w-4 mr-2" />
-                Edit Profile
+              <DropdownMenuItem 
+                className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  "px-3 py-2.5",
+                  "text-sm font-medium text-zinc-400",
+                  "transition-colors duration-200",
+                  "focus:bg-zinc-800/50 focus:text-zinc-100",
+                  "hover:bg-zinc-800/50 hover:text-zinc-100"
+                )}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <User className="h-4 w-4" />
+                <span>Edit Profile</span>
               </DropdownMenuItem>
             </ProfileSheet>
+            <DropdownMenuItem 
+              className={cn(
+                "flex items-center justify-between cursor-pointer",
+                "px-3 py-2.5",
+                "text-sm font-medium text-zinc-400",
+                "transition-colors duration-200",
+                "focus:bg-zinc-800/50 focus:text-zinc-100",
+                "hover:bg-zinc-800/50 hover:text-zinc-100"
+              )} 
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="flex items-center gap-2">
+                <Map className="h-4 w-4" />
+                <span>Global Navigation</span>
+              </div>
+              <Switch
+                checked={isNavbarVisible}
+                onCheckedChange={toggleNavbar}
+                className="ml-2 data-[state=checked]:bg-amber-500"
+              />
+            </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>

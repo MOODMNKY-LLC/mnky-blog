@@ -264,7 +264,18 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
   const pathname = usePathname()
   const navigation = isAuthenticated ? privateNavigation : publicNavigation
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [isVisible, setIsVisible] = useState(true)
   const supabase = createClient()
+
+  useEffect(() => {
+    // Listen for toggle events from FeatureNav
+    const handleToggle = (event: CustomEvent<{ isVisible: boolean }>) => {
+      setIsVisible(event.detail.isVisible);
+    };
+
+    window.addEventListener('toggle-navbar' as any, handleToggle);
+    return () => window.removeEventListener('toggle-navbar' as any, handleToggle);
+  }, []);
 
   useEffect(() => {
     async function downloadImage(path: string) {
@@ -287,7 +298,10 @@ export function Navbar({ user, isAuthenticated }: NavbarProps) {
   }, [user?.avatarUrl, supabase])
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 pointer-events-none">
+    <div className={cn(
+      "fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 pointer-events-none transition-transform duration-300",
+      !isVisible && "-translate-y-full"
+    )}>
       <nav className="relative flex items-center justify-between w-full max-w-7xl px-6 py-3 rounded-full glass pointer-events-auto">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1.5">

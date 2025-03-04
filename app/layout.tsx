@@ -8,6 +8,7 @@ import { Footer } from "@/components/footer";
 import { ChatProvider } from "@/components/providers/chat-provider";
 import { cn } from "@/lib/utils";
 import { FeatureNavigationProvider } from "@/lib/contexts/feature-navigation";
+import SupabaseProvider from "@/components/supabase/provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,17 +29,19 @@ export default function RootLayout({
           defaultTheme="dark"
           storageKey="mood-mnky-theme"
         >
-          <FeatureNavigationProvider>
-            <NavWrapper />
-            <main className="pt-24 flex-1">
-              {children}
-            </main>
-            <div className="hidden [.page-root_&]:block">
-              <Footer />
-            </div>
-            <ChatProvider />
-            <Toaster />
-          </FeatureNavigationProvider>
+          <SupabaseProvider>
+            <FeatureNavigationProvider>
+              <NavWrapper />
+              <main className="pt-24 flex-1">
+                {children}
+              </main>
+              <div className="hidden [.page-root_&]:block">
+                <Footer />
+              </div>
+              <ChatProvider />
+              <Toaster />
+            </FeatureNavigationProvider>
+          </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>

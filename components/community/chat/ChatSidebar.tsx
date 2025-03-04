@@ -1,119 +1,122 @@
 import * as React from 'react';
-import { MessageSquare, Users, Bot, Sparkles, Settings, Activity, Plus } from 'lucide-react';
+import { MessageSquare, Users, Bot, Sparkles, Settings, Activity, Plus, Home, Hash, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseSidebar, type SidebarSection } from '../shared/BaseSidebar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface ChatSidebarProps {
   isCollapsed?: boolean;
 }
 
-const chatSections: SidebarSection[] = [
-  {
-    id: 'direct',
-    name: 'Direct Messages',
-    items: [
-      {
-        id: 'ai-assistant',
-        name: 'AI Assistant',
-        icon: <Bot className="h-4 w-4" />,
-        badge: { type: 'live' },
-      },
-      {
-        id: 'community-team',
-        name: 'Community Team',
-        icon: <Users className="h-4 w-4" />,
-        badge: { type: 'new', text: 'Team' },
-      },
-    ],
-  },
-  {
-    id: 'channels',
-    name: 'Chat Channels',
-    items: [
-      {
-        id: 'general',
-        name: 'General Chat',
-        icon: <MessageSquare className="h-4 w-4" />,
-        count: 12,
-      },
-      {
-        id: 'introductions',
-        name: 'Introductions',
-        icon: <MessageSquare className="h-4 w-4" />,
-      },
-      {
-        id: 'help',
-        name: 'Help & Support',
-        icon: <MessageSquare className="h-4 w-4" />,
-        badge: { type: 'updated' },
-      },
-      {
-        id: 'feedback',
-        name: 'Feedback',
-        icon: <MessageSquare className="h-4 w-4" />,
-      },
-    ],
-  },
-  {
-    id: 'features',
-    name: 'Feature Discussions',
-    items: [
-      {
-        id: 'ai-chat',
-        name: 'AI Chat',
-        icon: <Sparkles className="h-4 w-4" />,
-        badge: { type: 'live', text: 'Active' },
-      },
-      {
-        id: 'voice-chat',
-        name: 'Voice Chat',
-        icon: <MessageSquare className="h-4 w-4" />,
-        badge: { type: 'new', text: 'Beta' },
-      },
-    ],
-  },
-];
-
 export function ChatSidebar({ isCollapsed }: ChatSidebarProps) {
-  const [selectedItemId, setSelectedItemId] = React.useState<string>('general');
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  // Get the current slug from the URL
+  const currentSlug = pathname === '/community/chat' ? 'home' : pathname.split('/').pop();
+
+  const handleChannelSelect = (slug: string) => {
+    if (slug === 'home') {
+      router.push('/community/chat');
+    } else {
+      router.push(`/community/chat/${slug}`);
+    }
+  };
+
+  const sections: SidebarSection[] = [
+    {
+      id: 'welcome',
+      name: 'Welcome',
+      items: [
+        {
+          id: 'home',
+          name: 'Announcements',
+          icon: <Home className="h-4 w-4" />,
+          badge: { type: 'new', text: 'Welcome' }
+        }
+      ]
+    },
+    {
+      id: 'channels',
+      name: 'Channels',
+      items: [
+        {
+          id: 'general',
+          name: 'General',
+          icon: <Hash className="h-4 w-4" />,
+          count: 24
+        },
+        {
+          id: 'announcements',
+          name: 'Announcements',
+          icon: <Megaphone className="h-4 w-4" />,
+          badge: { type: 'live' }
+        }
+      ]
+    },
+    {
+      id: 'direct',
+      name: 'Direct Messages',
+      items: [
+        {
+          id: 'ai-assistant',
+          name: 'AI Assistant',
+          icon: <Bot className="h-4 w-4" />,
+          badge: { type: 'live' }
+        },
+        {
+          id: 'community-team',
+          name: 'Community Team',
+          icon: <Users className="h-4 w-4" />,
+          badge: { type: 'new', text: 'Team' }
+        }
+      ]
+    },
+    {
+      id: 'features',
+      name: 'Feature Discussions',
+      items: [
+        {
+          id: 'ai-chat',
+          name: 'AI Chat',
+          icon: <Sparkles className="h-4 w-4" />,
+          badge: { type: 'live', text: 'Active' }
+        },
+        {
+          id: 'voice-chat',
+          name: 'Voice Chat',
+          icon: <MessageSquare className="h-4 w-4" />,
+          badge: { type: 'new', text: 'Beta' }
+        }
+      ]
+    }
+  ];
 
   // Calculate some stats for the header
-  const totalChannels = chatSections.reduce((acc, section) => acc + section.items.length, 0);
-  const activeChannels = chatSections.reduce((acc, section) => 
-    acc + section.items.filter(item => item.badge?.type === 'live').length, 0
+  const totalChannels = sections.reduce((acc: number, section: SidebarSection) => 
+    acc + section.items.length, 0
+  );
+  
+  const activeChannels = sections.reduce((acc: number, section: SidebarSection) => 
+    acc + section.items.filter((item) => item.badge?.type === 'live').length, 0
   );
 
   return (
     <BaseSidebar
       isCollapsed={isCollapsed}
-      sections={chatSections}
-      selectedItemId={selectedItemId}
-      onItemSelect={setSelectedItemId}
+      sections={sections}
+      selectedItemId={currentSlug}
+      onItemSelect={handleChannelSelect}
       headerContent={
-        !isCollapsed ? (
-          <div className="flex-1 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-100">Chat</h2>
-              <Badge variant="outline" className="text-[10px] h-5 border-zinc-800 bg-zinc-900/50 text-zinc-400">
-                <Activity className="w-3 h-3 mr-1 text-emerald-500" />
-                {activeChannels} Active
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-zinc-400">{totalChannels} Channels</p>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-md hover:bg-zinc-800/50 hover:text-amber-500"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ) : null
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-amber-500" />
+          {!isCollapsed && (
+            <span className="font-semibold text-zinc-100">Chat</span>
+          )}
+        </div>
       }
       footerContent={
         <div className="space-y-2">

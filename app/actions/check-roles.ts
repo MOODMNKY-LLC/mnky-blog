@@ -1,17 +1,10 @@
 'use server'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { MessageSquare, Users, Bot, Hash, ArrowRight } from "lucide-react"
-import Link from "next/link"
-import { InitializeChannelsButton } from '@/components/community/chat/initialize-channels-button'
-import { CheckRolesButton } from '@/components/community/chat/check-roles-button'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { RequestCookies } from 'next/dist/server/web/spec-extension/cookies'
-import { redirect } from 'next/navigation'
 
-export default async function ChatPage() {
+export async function checkRoles() {
   const cookieStore = cookies() as unknown as RequestCookies
   
   const supabase = createServerClient(
@@ -44,9 +37,19 @@ export default async function ChatPage() {
     }
   )
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (!user || userError) redirect('/login')
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
-  // Redirect to the general channel by default
-  redirect('/community/chat/general')
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (error) {
+    console.error('Error checking roles:', error)
+    return { error: error.message }
+  }
+
+  return { role: profile?.role || 'user' }
 } 
