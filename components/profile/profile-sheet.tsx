@@ -36,39 +36,43 @@ export function ProfileSheet({ user, children }: ProfileSheetProps) {
   useEffect(() => {
     async function checkRole() {
       try {
-        if (!user) {
-          setRole('user')
-          setLoading(false)
-          return
+        if (!user?.id) {
+          setRole('user');
+          setLoading(false);
+          return;
         }
         
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single()
+          .single();
 
         if (error) {
-          if (error.code === 'PGRST116') {
-            setRole('user')
-          } else {
-            console.error('Error fetching role:', error.message, error.details)
-          }
-          setLoading(false)
-          return
+          console.error('Error fetching role:', error);
+          setRole('user');
+          setLoading(false);
+          return;
         }
 
-        setRole((data.role as UserRole) || 'user')
+        if (!data) {
+          console.error('No profile data found');
+          setRole('user');
+          setLoading(false);
+          return;
+        }
+
+        setRole((data.role as UserRole) || 'user');
       } catch (error) {
-        console.error('Error in role check:', error)
-        setRole('user')
+        console.error('Error in role check:', error);
+        setRole('user');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    checkRole()
-  }, [user, supabase])
+    checkRole();
+  }, [user, supabase]);
 
   const handleClose = () => {
     setIsOpen(false)

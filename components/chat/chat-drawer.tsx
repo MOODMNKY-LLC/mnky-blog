@@ -12,7 +12,7 @@ import {
 import { StarIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { ChatLayout } from "./chat-layout";
-import MoodMnkyBlogManager from "../MoodMnkyBlogManager";
+import { MoodMnkyBlogManager } from "../MoodMnkyBlogManager";
 import Image from "next/image";
 
 interface ChatDrawerProps {

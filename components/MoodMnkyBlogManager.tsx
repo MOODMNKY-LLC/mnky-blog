@@ -2,23 +2,23 @@
 
 // app/components/MoodMnkyBlogManager.tsx
 
-import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
+import { Copy, Speaker } from "lucide-react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from "./chat/chat-bubble";
+import { ChatBubble, ChatBubbleMessage } from "./chat/chat-bubble";
+import MessageLoading from "./chat/message-loading";
 import { ChatMessageList } from "./chat/chat-message-list";
 import { ChatInput } from "./chat/chat-input";
-import MessageLoading from "./chat/message-loading";
-import { cn } from "@/lib/utils";
 import styles from "@/styles/flame-head.module.css";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Copy, Speaker } from "lucide-react";
+import { useChatStore, type ChatSession } from "@/lib/stores/chat-store";
 import { FlowiseService, type IMessage as FlowiseIMessage, type MessageType, type FlowiseStreamResponse } from '@/lib/flowise/client';
 import { createBrowserClient } from '@supabase/ssr';
-import { useChatStore, type ChatSession } from "@/lib/stores/chat-store";
+import { createClient } from '@/lib/supabase/client';
 
-// Message types
 interface Message {
   id: string;
   content: string;
@@ -32,7 +32,7 @@ interface Message {
 
 interface IMessage {
   message: string;
-  type: 'user' | 'assistant' | 'system';
+  type: MessageType;
 }
 
 // Add type definitions for Flowise SDK
@@ -81,66 +81,97 @@ interface FlowiseConfig {
 // Message rendering component
 function ChatMessage({ message, isStreaming }: { message: Message; isStreaming: boolean }) {
   const [isSpeaking, setIsSpeaking] = React.useState(false);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<{
     id: string;
-    avatar_url: string | null;
     full_name: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
     username: string | null;
+    email?: string;
   } | null>(null);
   const speechRef = React.useRef<SpeechSynthesisUtterance | null>(null);
   const { toast } = useToast();
-  const supabase = React.useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), []);
+  const supabase = createClient();
 
-  // Fetch user profile and avatar
+  // Fetch user profile for user messages
   React.useEffect(() => {
+    let mounted = true;
+
     async function getProfile() {
-      if (message.isUser) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          setProfile(data);
-        }
+      if (!message.isUser) {
+        // Set Blog MNKY profile for AI messages
+        setProfile({
+          id: 'blog-mnky',
+          full_name: 'Blog MNKY',
+          display_name: 'Blog MNKY',
+          avatar_url: '/blog-mnky-avatar.png',
+          username: 'blog-mnky',
+          email: 'ai@mood-mnky.com'
+        });
+        return;
       }
-    }
-    getProfile();
-  }, [message.isUser, supabase]);
 
-  // Download and set avatar URL
-  React.useEffect(() => {
-    async function downloadImage(path: string) {
       try {
-        const { data, error } = await supabase.storage.from('avatars').download(path);
-        if (error) {
-          throw error;
+        // Get the current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) throw userError;
+        
+        if (!user) {
+          // Handle unauthenticated user
+          if (mounted) {
+            setProfile({
+              id: 'guest',
+              full_name: 'Guest User',
+              display_name: 'Guest User',
+              avatar_url: null,
+              username: 'guest',
+              email: 'guest@mood-mnky.com'
+            });
+          }
+          return;
         }
-        const url = URL.createObjectURL(data);
-        setAvatarUrl(url);
+
+        // Get the user's profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, avatar_url, full_name, username, email, display_name')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        if (mounted) {
+          setProfile(profileData || {
+            id: user.id,
+            full_name: user.email?.split('@')[0] || 'User',
+            display_name: user.email?.split('@')[0] || 'User',
+            avatar_url: null,
+            username: user.email?.split('@')[0] || 'user',
+            email: user.email
+          });
+        }
       } catch (error) {
-        console.log('Error downloading avatar:', error);
+        console.error('Error fetching profile:', error);
+        if (mounted) {
+          setProfile({
+            id: 'unknown',
+            full_name: 'Guest User',
+            display_name: 'Guest User',
+            avatar_url: null,
+            username: 'guest',
+            email: 'guest@mood-mnky.com'
+          });
+        }
       }
     }
 
-    if (profile?.avatar_url) {
-      downloadImage(profile.avatar_url);
-    }
-  }, [profile?.avatar_url, supabase]);
+    getProfile();
 
-  // Cleanup avatar URL on unmount
-  React.useEffect(() => {
     return () => {
-      if (avatarUrl) {
-        URL.revokeObjectURL(avatarUrl);
-      }
+      mounted = false;
     };
-  }, [avatarUrl]);
+  }, [message.isUser, supabase]);
 
   const handleCopy = async () => {
     try {
@@ -210,29 +241,12 @@ function ChatMessage({ message, isStreaming }: { message: Message; isStreaming: 
           message={message}
           variant={message.isUser ? "sent" : "received"}
           layout="default"
+          profile={profile}
           className={cn(
             "flex flex-col gap-2 p-4",
             message.isUser ? "items-end" : "items-start"
           )}
         >
-          {!message.isUser && (
-            <ChatBubbleAvatar
-              profile={{
-                full_name: 'Blog MNKY',
-                avatar_url: '/images/blog-mnky-avatar.png',
-                username: 'blog-mnky'
-              }}
-            />
-          )}
-          {message.isUser && (
-            <ChatBubbleAvatar
-              profile={{
-                full_name: profile?.full_name || profile?.username || 'User',
-                avatar_url: avatarUrl,
-                username: profile?.username || 'user'
-              }}
-            />
-          )}
           <ChatBubbleMessage 
             isLoading={message.pending}
             isStreaming={isStreaming}
@@ -415,7 +429,7 @@ function WelcomeScreen({ onSubmit }: { onSubmit?: (message: string) => void }) {
   );
 }
 
-export default function MoodMnkyBlogManager() {
+export function MoodMnkyBlogManager() {
   const {
     sessions,
     currentSessionId,

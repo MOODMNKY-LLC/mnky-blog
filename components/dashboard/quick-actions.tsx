@@ -171,20 +171,31 @@ function DraggableDock() {
   useEffect(() => {
     async function downloadImage(path: string) {
       try {
-        const { data, error } = await supabase.storage.from('avatars').download(path)
+        if (!path) return;
+        
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .download(path);
+
         if (error) {
-          throw error
+          console.error('Error downloading avatar:', error);
+          return;
         }
 
-        const url = URL.createObjectURL(data)
-        setAvatarUrl(url)
+        if (!data) {
+          console.error('No data received from storage');
+          return;
+        }
+
+        const url = URL.createObjectURL(data);
+        setAvatarUrl(url);
       } catch (error) {
-        console.log('Error downloading avatar:', error)
+        console.error('Error in downloadImage:', error);
       }
     }
 
     if (profile?.avatar_url) {
-      downloadImage(profile.avatar_url)
+      downloadImage(profile.avatar_url);
     }
   }, [profile?.avatar_url, supabase]);
 

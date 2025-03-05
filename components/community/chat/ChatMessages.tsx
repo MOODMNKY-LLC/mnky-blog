@@ -1,98 +1,43 @@
 'use client';
 
 import * as React from 'react';
-import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/use-toast';
-import {
+import { useUser } from '@/hooks/use-user';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
   ChatBubble,
-  ChatBubbleAvatar,
   ChatBubbleMessage,
   ChatBubbleTimestamp,
   ChatBubbleAction,
   ChatBubbleActionWrapper,
+  ChatBubbleAvatar,
+  type Profile
 } from '@/components/chat/chat-bubble';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Reply, Smile, MoreHorizontal, Trash2, Pin, Share, Edit, Pencil, Search } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { type User } from '@supabase/supabase-js';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Smile, MoreHorizontal, Trash2, Pin, Pencil } from 'lucide-react';
+import { format } from 'date-fns';
+import { type User } from '@supabase/supabase-js';
 import { MessageReactions } from './message-reactions';
 import { MessageEditor } from './MessageEditor';
 import { PinnedMessages } from './PinnedMessages';
 import { useState, useRef } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { createClient } from '@/lib/supabase/client';
 import { ChatHeader } from './ChatHeader';
+import { type Message, type MessageWithProfile, type MessageMetadata } from '@/lib/types/chat';
 
 interface Reaction {
   emoji: string;
   count: number;
-  userNames: string[];
+  users: string[];
 }
 
 interface Attachment {
   type: string;
   url: string;
-}
-
-interface MessageMetadata {
-  attachments?: Attachment[];
-  reactions?: Reaction[];
-  pinned?: boolean;
-  pinned_at?: string;
-  pinned_by?: string;
-  edited?: boolean;
-  edited_at?: string;
-  mentions?: string[];
-  embeds?: Array<{
-    type: string;
-    data: unknown;
-  }>;
-}
-
-interface Profile {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  display_name: string | null;
-  role: string;
-}
-
-interface MessageWithProfile {
-  id: string;
-  channel_id: string;
-  user_id: string;
-  message: string;
-  type: 'TEXT' | 'MEDIA' | 'SYSTEM' | 'VOICE' | 'CODE';
-  parent_id?: string;
-  metadata: MessageMetadata;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-  username: string;
-  avatar_url: string | null;
-  display_name: string | null;
-  user_role: string;
-}
-
-interface Message {
-  id: string;
-  channel_id: string;
-  user_id: string;
-  message: string;
-  type: 'TEXT' | 'MEDIA' | 'SYSTEM' | 'VOICE' | 'CODE';
-  parent_id?: string;
-  metadata: MessageMetadata;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-  profile: {
-    username: string;
-    avatar_url: string | null;
-    display_name: string | null;
-    role: string;
-  };
 }
 
 interface ChatMessagesProps {
@@ -604,13 +549,13 @@ export function ChatMessages({
       // Find if this reaction already exists
       const existingReactionIndex = currentReactions.findIndex((r: Reaction) => r.emoji === emoji);
       const hasReacted = existingReactionIndex !== -1 && 
-        currentReactions[existingReactionIndex].userNames?.includes(currentUser.id);
+        currentReactions[existingReactionIndex].users?.includes(currentUser.id);
 
       if (hasReacted) {
         // Remove user from the reaction
         const reaction = updatedReactions[existingReactionIndex];
-        reaction.userNames = (reaction.userNames || []).filter((userId: string) => userId !== currentUser.id);
-        reaction.count = reaction.userNames.length;
+        reaction.users = (reaction.users || []).filter((userId: string) => userId !== currentUser.id);
+        reaction.count = reaction.users.length;
 
         // Remove the reaction entirely if no users left
         if (reaction.count === 0) {
@@ -620,14 +565,14 @@ export function ChatMessages({
         if (existingReactionIndex !== -1) {
           // Add user to existing reaction
           const reaction = updatedReactions[existingReactionIndex];
-          reaction.userNames = [...(reaction.userNames || []), currentUser.id];
-          reaction.count = reaction.userNames.length;
+          reaction.users = [...(reaction.users || []), currentUser.id];
+          reaction.count = reaction.users.length;
         } else {
           // Create new reaction
           updatedReactions.push({
             emoji,
             count: 1,
-            userNames: [currentUser.id]
+            users: [currentUser.id]
           });
         }
       }
@@ -885,6 +830,126 @@ export function ChatMessages({
     });
   }
 
+  // Update the profile type in the message loading skeleton
+  const MessageLoadingSkeleton = () => (
+    <div className="flex items-start gap-4 p-4">
+      <Skeleton className="h-10 w-10 rounded-full" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-[100px]" />
+        <Skeleton className="h-4 w-[200px]" />
+      </div>
+    </div>
+  );
+
+  const renderMessage = (message: MessageWithProfile) => {
+    const profile: Profile = {
+      id: message.user_id || 'anonymous',
+      username: message.profile.username || null,
+      full_name: message.profile.display_name || null,
+      display_name: message.profile.display_name || null,
+      avatar_url: message.profile.avatar_url,
+      role: message.profile.role || 'user'
+    };
+
+    return (
+      <ChatBubble
+        key={message.id}
+        variant={message.user_id === currentUser?.id ? 'sent' : 'received'}
+        message={{
+          id: message.id,
+          message: message.message,
+          user_id: message.user_id,
+          created_at: message.created_at,
+          metadata: message.metadata
+        }}
+        profile={profile}
+        onDelete={handleDelete}
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-zinc-100">
+              {profile?.display_name || profile?.username || 'Unknown User'}
+            </span>
+            {profile?.role && profile.role !== 'user' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500">
+                {profile.role}
+              </span>
+            )}
+            <span className="text-xs text-zinc-400">
+              {format(new Date(message.created_at), 'HH:mm')}
+            </span>
+            {message.metadata.edited && (
+              <span className="text-xs text-zinc-500">(edited)</span>
+            )}
+            {message.metadata.pinned && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Pin className="h-3 w-3" />
+                <span>
+                  Pinned {message.metadata.pinned_at && formatTimestamp(message.metadata.pinned_at)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {message.deleted_at && (
+            <div className="text-sm text-muted-foreground italic">
+              This message was deleted
+            </div>
+          )}
+
+          {!message.deleted_at && (
+            <>
+              <div className="text-sm whitespace-pre-wrap break-words">
+                {message.message}
+              </div>
+              <MessageReactions
+                messageId={message.id}
+                reactions={message.metadata.reactions || []}
+                onReactionSelect={handleReactionSelect}
+              />
+            </>
+          )}
+
+          {/* Message Actions */}
+          {!message.deleted_at && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-zinc-700/50"
+                  onClick={() => handleReactionSelect(message.id, '👍')}
+                >
+                  <Smile className="h-4 w-4 text-zinc-400" />
+                </Button>
+                {message.user_id === currentUser?.id && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-zinc-700/50"
+                      onClick={() => setEditingMessageId(message.id)}
+                    >
+                      <Pencil className="h-4 w-4 text-zinc-400" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-zinc-700/50"
+                      onClick={() => handleDelete(message.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-zinc-400" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </ChatBubble>
+    );
+  };
+
   return (
     <ScrollArea 
       className="h-full" 
@@ -895,13 +960,7 @@ export function ChatMessages({
         {isLoading && (
           <div className="space-y-4 px-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-start gap-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[400px]" />
-                </div>
-              </div>
+              <MessageLoadingSkeleton key={i} />
             ))}
           </div>
         )}
@@ -963,9 +1022,12 @@ export function ChatMessages({
                   >
                     <ChatBubbleAvatar
                       profile={{
-                        avatar_url: profile?.avatar_url || null,
-                        full_name: profile?.display_name || profile?.username || 'Unknown User',
-                        username: profile?.username || 'unknown'
+                        id: message.user_id || 'anonymous',
+                        username: message.profile.username || null,
+                        full_name: message.profile.display_name || null,
+                        display_name: message.profile.display_name || null,
+                        avatar_url: message.profile.avatar_url,
+                        role: message.profile.role || 'user'
                       }}
                     />
                     <div className="flex-1">

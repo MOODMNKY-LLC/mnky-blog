@@ -18,6 +18,7 @@ import {
 import { useSupabase } from '@/components/supabase/provider';
 import { toast } from 'sonner';
 import { PostgrestError } from '@supabase/supabase-js';
+import { type Reaction } from '@/lib/types/chat';
 
 // Frequently used reactions that appear at the top
 const QUICK_REACTIONS = [
@@ -35,12 +36,6 @@ interface AvailableReaction {
   emoji: string;
   name: string;
   description: string;
-}
-
-interface Reaction {
-  emoji: string;
-  count: number;
-  userNames: string[];
 }
 
 interface MessageReactionsProps {
@@ -163,11 +158,8 @@ export function MessageReactions({
   // Check if the current user has reacted with a specific emoji
   const hasReacted = (emoji: string): boolean => {
     if (!currentUserId) return false;
-    
     const reaction = reactions.find(r => r.emoji === emoji);
-    if (!reaction?.userNames) return false;
-    
-    return reaction.userNames.includes(currentUserId);
+    return reaction ? reaction.users.includes(currentUserId) : false;
   };
 
   // Handle reaction selection
@@ -231,46 +223,33 @@ export function MessageReactions({
         {isLoading ? (
           <div className="animate-pulse bg-zinc-800/50 h-6 w-16 rounded-full" />
         ) : reactions && reactions.length > 0 ? (
-          reactions.map(reaction => {
-            const availableReaction = availableReactions.find(r => r.emoji === reaction.emoji);
-            if (!availableReaction) return null;
-
-            return (
-              <TooltipProvider key={reaction.emoji} delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'h-6 px-2 py-1 hover:bg-amber-500/10',
-                        'transition-colors duration-200',
-                        'flex items-center gap-1 rounded-full',
-                        hasReacted(reaction.emoji) && 'bg-amber-500/20 text-amber-500'
-                      )}
-                      onClick={() => handleReactionSelect(reaction.emoji)}
-                      disabled={isLoading}
-                    >
-                      <span className="text-sm">{reaction.emoji}</span>
-                      <span className="text-xs font-medium">
-                        {reaction.count || 0}
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    <div>
-                      <p className="font-medium">{availableReaction.description}</p>
-                      <p className="text-zinc-400">
-                        {reaction.userNames && reaction.userNames.length > 0 && (
-                          `${reaction.userNames.slice(0, 3).join(', ')}${reaction.userNames.length > 3 ? ` and ${reaction.userNames.length - 3} more` : ''}`
-                        )}
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            );
-          })
+          reactions.map((reaction, index) => (
+            <TooltipProvider key={`${reaction.emoji}-${index}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-6 w-fit min-w-[1.5rem] rounded-full px-1.5 text-xs hover:bg-zinc-800/50",
+                      hasReacted(reaction.emoji) && "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+                    )}
+                    onClick={() => handleReactionSelect(reaction.emoji)}
+                  >
+                    <span className="mr-1">{reaction.emoji}</span>
+                    <span>{reaction.count}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {reaction.users.length > 0
+                      ? `Reacted by ${reaction.users.join(', ')}`
+                      : 'No reactions yet'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))
         ) : null}
       </div>
 
