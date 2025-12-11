@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup pnpm
@@ -33,7 +32,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile || pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Check for lockfile changes
         id: check-lockfile
