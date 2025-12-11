@@ -20,24 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.9.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: npm install
 
       - name: Check for lockfile changes
         id: check-lockfile
         run: |
-          if [ -n "$(git status --porcelain pnpm-lock.yaml)" ]; then
+          if [ -n "$(git status --porcelain package-lock.json)" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -48,6 +43,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add pnpm-lock.yaml
+          git add package-lock.json
           git commit -m "chore: update lockfile after dependency changes [skip ci]"
           git push
