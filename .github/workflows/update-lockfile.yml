@@ -27,15 +27,22 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install --legacy-peer-deps || npm install
+          npm ls --depth=0 || true
 
       - name: Check for lockfile changes
         id: check-lockfile
         run: |
-          if [ -n "$(git status --porcelain package-lock.json)" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+          if [ -f "package-lock.json" ]; then
+            if [ -n "$(git status --porcelain package-lock.json)" ]; then
+              echo "changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "changed=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Warning: package-lock.json not found after npm install"
           fi
 
       - name: Commit and push lockfile
