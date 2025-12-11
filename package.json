@@ -2,7 +2,7 @@
   "name": "mnky-blog",
   "version": "0.1.0",
   "private": true,
-  "_comment": "Trigger lockfile update workflow",
+  "_comment": "Trigger lockfile update workflow after pnpm version fix",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
