@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Users, Bot, Hash, ArrowRight, MessageCircle, ListFilter, Bookmark } from "lucide-react"
+import { MessageSquare, Hash, ArrowRight, MessageCircle, ListFilter, Bookmark } from "lucide-react"
 import Link from "next/link"
 import { InitializeChannelsButton } from '@/components/community/chat/initialize-channels-button'
 import { CheckRolesButton } from '@/components/community/chat/check-roles-button'
@@ -25,7 +25,7 @@ export default async function ChatPage() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
+          } catch (_error) {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
@@ -34,7 +34,7 @@ export default async function ChatPage() {
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
+          } catch (_error) {
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
@@ -225,4 +225,4 @@ export default async function ChatPage() {
       </div>
     </div>
   )
-} 
+}
